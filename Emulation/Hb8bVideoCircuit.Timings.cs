@@ -1,31 +1,81 @@
 using System;
+#nullable enable
 
-public partial class Hb8bVideoCircuit : Hb8bBusPeripheral
+namespace Hb8b.Emulation
 {
-    public class Timings
+    public partial class Hb8bVideoCircuit
     {
-        public const Int32 ClocksPerPixel = 1;
+        /// <summary>
+        /// Contains the frame timings used by the video generation circuit.
+        /// </summary>
+        public static class Timings
+        {
+            /// <summary>
+            /// The number of pixel clock cycles per each system clock cycle.
+            /// </summary>
+            public const Int32 PixelClocksPerSystemClock = 4;
 
-        public const Int32 ScanlinesPerPixel = 1;
+            /// <summary>
+            /// The total number of pixels on a scanline, including the front and back porches.
+            /// </summary>
+            public const Int32 TotalPixelsPerScanline = 800;
 
-        public const Int32 TotalPixelsPerScanline = 800;
+            /// <summary>
+            /// The number of pixels in the horizontal front porch.
+            /// </summary>
+            public const Int32 TotalPixelsInHorizontalFrontPorch = 16;
 
-        public const Int32 TotalPixelsInHorizontalFrontPorch = 16;
+            /// <summary>
+            /// The number of pixels in the horizontal sync pulse.
+            /// </summary>
+            public const Int32 TotalPixelsInHorizontalSync = 96;
 
-        public const Int32 TotalPixelsInHorizontalSync = 96;
+            /// <summary>
+            /// The number of pixels in the horizontal back porch.
+            /// </summary>
+            public const Int32 TotalPixelsInHorizontalBackPorch = 48;
 
-        public const Int32 TotalScanlinesPerFrame = 525;
+            /// <summary>
+            /// The total number of visible pixels in a scanline.
+            /// </summary>
+            public const Int32 VisiblePixelsPerScanline = TotalPixelsPerScanline -
+                (TotalPixelsInHorizontalFrontPorch + TotalPixelsInHorizontalSync + TotalPixelsInHorizontalBackPorch);
 
-        public const Int32 TotalScanlinesInVerticalFrontPorch = 10;
+            /// <summary>
+            /// The total number of scanlines in a frame.
+            /// </summary>
+            public const Int32 TotalScanlinesPerFrame = 525;
 
-        public const Int32 TotalScanlinesInVerticalSync = 2;
+            /// <summary>
+            /// The total number of scanlines in the vertical front porch.
+            /// </summary>
+            public const Int32 TotalScanlinesInVerticalFrontPorch = 10;
 
-        public const Int32 VisiblePixelsPerScanline = 640;
+            /// <summary>
+            /// The total number of scalines in the vertical sync pulse.
+            /// </summary>
+            public const Int32 TotalScanlinesInVerticalSync = 2;
 
-        public const Int32 VisibleScanlinesPerFrame = 480;
+            /// <summary>
+            /// The total number of scanlines in the vertical back porch.
+            /// </summary>
+            public const Int32 TotalScanlinesInVerticalBackPorch = 33;
 
-        public const Int32 VisibleWidthInPixels = VisiblePixelsPerScanline;
+            /// <summary>
+            /// The total number of visible scanlines in a frame.
+            /// </summary>
+            public const Int32 VisibleScanlinesPerFrame = TotalScanlinesPerFrame -
+                (TotalScanlinesInVerticalFrontPorch + TotalScanlinesInVerticalSync + TotalScanlinesInVerticalBackPorch);
 
-        public const Int32 VisibleHeightInPixels = VisibleScanlinesPerFrame / ScanlinesPerPixel;
+            /// <summary>
+            /// The total number of pixels in a frame.
+            /// </summary>
+            public const Int32 TotalPixelsPerFrame = TotalPixelsPerScanline * TotalScanlinesPerFrame;
+
+            /// <summary>
+            /// The total number of system clocks in each frame.
+            /// </summary>
+            public const Int32 TotalSystemClocksPerFrame = TotalPixelsPerFrame / PixelClocksPerSystemClock;
+        }
     }
 }

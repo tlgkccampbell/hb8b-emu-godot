@@ -3,7 +3,7 @@ using System;
 
 public class EmulatorVideo : Node
 {
-    public Hb8bBus Bus { get; set; }
+    public Hb8b.Emulation.Hb8bSystemBus Bus { get; set; }
 
     private TileMap _tilemap;
 
@@ -26,7 +26,7 @@ public class EmulatorVideo : Node
     {
         const Int32 TileMapWidth = 32;
 
-        var vram = Bus.VideoRam.Data;
+        var vram = Bus.Video.Memory;
 
         for (var y = 0; y < 60; y++) 
         {
@@ -40,7 +40,5 @@ public class EmulatorVideo : Node
                 _tilemap.SetCell(x, y, 0, autotileCoord: tileCoord);
             }
         }
-
-        Bus.VideoCircuit.HandleFrameDrawn();
     }
 }

@@ -3,7 +3,7 @@ using System;
 
 public class EmulatorCore : Node
 {
-    public Hb8bBus Bus { get; set; }
+    public Hb8b.Emulation.Hb8bSystemBus Bus { get; set; }
 
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
