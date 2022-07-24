@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=2]
+[gd_scene load_steps=16 format=2]
 
 [ext_resource path="res://Scenes/Overlay/FPSLabel.cs" type="Script" id=1]
 [ext_resource path="res://Scenes/Overlay/Overlay.cs" type="Script" id=2]
@@ -8,12 +8,23 @@
 [ext_resource path="res://Scenes/Overlay/MemoryPageViewer.cs" type="Script" id=6]
 [ext_resource path="res://Scenes/Overlay/RunningStoppedLabel.cs" type="Script" id=7]
 [ext_resource path="res://Scenes/Overlay/CycleCounterLabel.cs" type="Script" id=8]
+[ext_resource path="res://Scenes/Overlay/DisasmView.cs" type="Script" id=9]
+[ext_resource path="res://Scenes/Overlay/DisasmDisabledLabel.cs" type="Script" id=10]
+[ext_resource path="res://Scenes/Overlay/StatusBitLabel.cs" type="Script" id=11]
 
 [sub_resource type="DynamicFont" id=1]
 font_data = ExtResource( 4 )
 
 [sub_resource type="Theme" id=2]
 default_font = SubResource( 1 )
+
+[sub_resource type="StyleBoxFlat" id=4]
+bg_color = Color( 0, 0, 0, 0.588235 )
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color( 0, 0, 0, 1 )
 
 [sub_resource type="StyleBoxFlat" id=3]
 bg_color = Color( 0, 0, 0, 0.588235 )
@@ -34,41 +45,44 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 custom_constants/separation = 8
 
-[node name="StatusPanel" type="MarginContainer" parent="VBoxContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer"]
 margin_right = 1280.0
-margin_bottom = 134.0
-custom_constants/margin_right = 8
+margin_bottom = 176.0
+
+[node name="StatusPanel" type="MarginContainer" parent="VBoxContainer/HBoxContainer"]
+margin_right = 556.0
+margin_bottom = 176.0
 custom_constants/margin_top = 8
 custom_constants/margin_left = 8
 
-[node name="PanelContainer" type="PanelContainer" parent="VBoxContainer/StatusPanel"]
+[node name="PanelContainer" type="PanelContainer" parent="VBoxContainer/HBoxContainer/StatusPanel"]
 margin_left = 8.0
 margin_top = 8.0
-margin_right = 1272.0
-margin_bottom = 134.0
+margin_right = 556.0
+margin_bottom = 176.0
 
-[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/StatusPanel/PanelContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer"]
 margin_left = 7.0
 margin_top = 7.0
-margin_right = 1257.0
-margin_bottom = 119.0
+margin_right = 541.0
+margin_bottom = 161.0
 custom_constants/margin_right = 8
 custom_constants/margin_top = 8
 custom_constants/margin_left = 8
 custom_constants/margin_bottom = 8
 
-[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/StatusPanel/PanelContainer/MarginContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer"]
 margin_left = 8.0
 margin_top = 8.0
-margin_right = 1242.0
-margin_bottom = 104.0
+margin_right = 526.0
+margin_bottom = 146.0
 
-[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer"]
-margin_right = 1066.0
-margin_bottom = 96.0
+[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer"]
+margin_right = 350.0
+margin_bottom = 138.0
 size_flags_horizontal = 3
 
-[node name="FPSLabel" type="Label" parent="VBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer"]
+[node name="FPSLabel" type="Label" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer"]
 margin_right = 96.0
 margin_bottom = 16.0
 size_flags_horizontal = 0
@@ -76,7 +90,7 @@ size_flags_vertical = 0
 text = "60 FPS"
 script = ExtResource( 1 )
 
-[node name="RunningStoppedLabel" type="Label" parent="VBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer"]
+[node name="RunningStoppedLabel" type="Label" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer"]
 margin_top = 20.0
 margin_right = 112.0
 margin_bottom = 36.0
@@ -85,102 +99,243 @@ size_flags_vertical = 0
 text = "Stopped"
 script = ExtResource( 7 )
 
-[node name="CycleCounterLabel" type="Label" parent="VBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer"]
+[node name="CycleCounterLabel" type="Label" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer"]
 margin_top = 40.0
-margin_right = 224.0
-margin_bottom = 96.0
+margin_right = 350.0
+margin_bottom = 138.0
+rect_min_size = Vector2( 350, 0 )
 size_flags_horizontal = 0
 size_flags_vertical = 3
 text = "Cycle 12346578"
 valign = 2
+clip_text = true
 script = ExtResource( 8 )
 
-[node name="RegisterDisplay" type="HBoxContainer" parent="VBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer"]
-margin_left = 1070.0
-margin_right = 1234.0
-margin_bottom = 96.0
+[node name="VBoxContainer2" type="VBoxContainer" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer"]
+margin_left = 354.0
+margin_right = 518.0
+margin_bottom = 138.0
 
-[node name="RegisterLabels" type="VBoxContainer" parent="VBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/RegisterDisplay"]
+[node name="RegisterDisplay" type="HBoxContainer" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer2"]
+margin_right = 164.0
+margin_bottom = 118.0
+size_flags_vertical = 3
+
+[node name="RegisterLabels" type="VBoxContainer" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer2/RegisterDisplay"]
 margin_right = 80.0
-margin_bottom = 96.0
+margin_bottom = 118.0
 
-[node name="ARegisterLabel" type="Label" parent="VBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/RegisterDisplay/RegisterLabels"]
+[node name="ARegisterLabel" type="Label" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer2/RegisterDisplay/RegisterLabels"]
 margin_right = 80.0
 margin_bottom = 16.0
 text = "A:"
 align = 2
 
-[node name="XRegisterLabel" type="Label" parent="VBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/RegisterDisplay/RegisterLabels"]
+[node name="XRegisterLabel" type="Label" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer2/RegisterDisplay/RegisterLabels"]
 margin_top = 20.0
 margin_right = 80.0
 margin_bottom = 36.0
 text = "X:"
 align = 2
 
-[node name="YRegisterLabel" type="Label" parent="VBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/RegisterDisplay/RegisterLabels"]
+[node name="YRegisterLabel" type="Label" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer2/RegisterDisplay/RegisterLabels"]
 margin_top = 40.0
 margin_right = 80.0
 margin_bottom = 56.0
 text = "Y:"
 align = 2
 
-[node name="StackPointerLabel" type="Label" parent="VBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/RegisterDisplay/RegisterLabels"]
+[node name="StackPointerLabel" type="Label" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer2/RegisterDisplay/RegisterLabels"]
 margin_top = 60.0
 margin_right = 80.0
 margin_bottom = 76.0
 text = "STKP:"
 align = 2
 
-[node name="ProgramCounterLabel" type="Label" parent="VBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/RegisterDisplay/RegisterLabels"]
+[node name="ProgramCounterLabel" type="Label" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer2/RegisterDisplay/RegisterLabels"]
 margin_top = 80.0
 margin_right = 80.0
 margin_bottom = 96.0
 text = "PC:"
 align = 2
 
-[node name="RegisterValues" type="VBoxContainer" parent="VBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/RegisterDisplay"]
+[node name="RegisterValues" type="VBoxContainer" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer2/RegisterDisplay"]
 margin_left = 84.0
 margin_right = 164.0
-margin_bottom = 96.0
+margin_bottom = 118.0
 script = ExtResource( 3 )
 
-[node name="ARegisterValue" type="Label" parent="VBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/RegisterDisplay/RegisterValues"]
+[node name="ARegisterValue" type="Label" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer2/RegisterDisplay/RegisterValues"]
 margin_right = 80.0
 margin_bottom = 16.0
 text = "$FF"
 
-[node name="XRegisterValue" type="Label" parent="VBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/RegisterDisplay/RegisterValues"]
+[node name="XRegisterValue" type="Label" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer2/RegisterDisplay/RegisterValues"]
 margin_top = 20.0
 margin_right = 80.0
 margin_bottom = 36.0
 text = "$FF"
 
-[node name="YRegisterValue" type="Label" parent="VBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/RegisterDisplay/RegisterValues"]
+[node name="YRegisterValue" type="Label" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer2/RegisterDisplay/RegisterValues"]
 margin_top = 40.0
 margin_right = 80.0
 margin_bottom = 56.0
 text = "$FF"
 
-[node name="StackPointerValue" type="Label" parent="VBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/RegisterDisplay/RegisterValues"]
+[node name="StackPointerValue" type="Label" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer2/RegisterDisplay/RegisterValues"]
 margin_top = 60.0
 margin_right = 80.0
 margin_bottom = 76.0
 text = "$FF"
 
-[node name="ProgramCounterValue" type="Label" parent="VBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/RegisterDisplay/RegisterValues"]
+[node name="ProgramCounterValue" type="Label" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer2/RegisterDisplay/RegisterValues"]
 margin_top = 80.0
 margin_right = 80.0
 margin_bottom = 96.0
 text = "$FFFF"
 
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer2"]
+margin_left = 4.0
+margin_top = 122.0
+margin_right = 160.0
+margin_bottom = 138.0
+size_flags_horizontal = 4
+
+[node name="StatusBitLabelN" type="Label" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer2/HBoxContainer"]
+margin_right = 16.0
+margin_bottom = 16.0
+text = "N"
+script = ExtResource( 11 )
+StatusBit = 128
+
+[node name="StatusBitLabelV" type="Label" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer2/HBoxContainer"]
+margin_left = 20.0
+margin_right = 36.0
+margin_bottom = 16.0
+text = "V"
+script = ExtResource( 11 )
+StatusBit = 64
+
+[node name="StatusBitLabelU" type="Label" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer2/HBoxContainer"]
+margin_left = 40.0
+margin_right = 56.0
+margin_bottom = 16.0
+text = "U"
+script = ExtResource( 11 )
+StatusBit = 32
+
+[node name="StatusBitLabelB" type="Label" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer2/HBoxContainer"]
+margin_left = 60.0
+margin_right = 76.0
+margin_bottom = 16.0
+text = "B"
+script = ExtResource( 11 )
+StatusBit = 16
+
+[node name="StatusBitLabelD" type="Label" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer2/HBoxContainer"]
+margin_left = 80.0
+margin_right = 96.0
+margin_bottom = 16.0
+text = "D"
+script = ExtResource( 11 )
+StatusBit = 8
+
+[node name="StatusBitLabelI" type="Label" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer2/HBoxContainer"]
+margin_left = 100.0
+margin_right = 116.0
+margin_bottom = 16.0
+text = "I"
+script = ExtResource( 11 )
+StatusBit = 4
+
+[node name="StatusBitLabelZ" type="Label" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer2/HBoxContainer"]
+margin_left = 120.0
+margin_right = 136.0
+margin_bottom = 16.0
+text = "Z"
+script = ExtResource( 11 )
+StatusBit = 2
+
+[node name="StatusBitLabelC" type="Label" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer2/HBoxContainer"]
+margin_left = 140.0
+margin_right = 156.0
+margin_bottom = 16.0
+text = "C"
+script = ExtResource( 11 )
+StatusBit = 1
+
+[node name="DisasmPanel" type="MarginContainer" parent="VBoxContainer/HBoxContainer"]
+margin_left = 560.0
+margin_right = 1280.0
+margin_bottom = 176.0
+size_flags_horizontal = 3
+custom_constants/margin_right = 8
+custom_constants/margin_top = 8
+custom_constants/margin_left = 8
+
+[node name="PanelContainer" type="PanelContainer" parent="VBoxContainer/HBoxContainer/DisasmPanel"]
+margin_left = 8.0
+margin_top = 8.0
+margin_right = 712.0
+margin_bottom = 176.0
+
+[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/HBoxContainer/DisasmPanel/PanelContainer"]
+margin_left = 7.0
+margin_top = 7.0
+margin_right = 697.0
+margin_bottom = 161.0
+
+[node name="PanelContainer" type="PanelContainer" parent="VBoxContainer/HBoxContainer/DisasmPanel/PanelContainer/MarginContainer"]
+margin_right = 690.0
+margin_bottom = 154.0
+size_flags_vertical = 4
+custom_styles/panel = SubResource( 4 )
+
+[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/HBoxContainer/DisasmPanel/PanelContainer/MarginContainer/PanelContainer"]
+margin_left = 1.0
+margin_top = 1.0
+margin_right = 689.0
+margin_bottom = 153.0
+size_flags_vertical = 4
+custom_constants/margin_right = 8
+custom_constants/margin_top = 8
+custom_constants/margin_left = 8
+custom_constants/margin_bottom = 8
+
+[node name="DisasmView" type="Control" parent="VBoxContainer/HBoxContainer/DisasmPanel/PanelContainer/MarginContainer/PanelContainer/MarginContainer"]
+margin_left = 8.0
+margin_top = 8.0
+margin_right = 680.0
+margin_bottom = 144.0
+script = ExtResource( 9 )
+LinesDisplayed = 6
+
+[node name="DisasmDisabledLabel" type="Label" parent="VBoxContainer/HBoxContainer/DisasmPanel/PanelContainer/MarginContainer/PanelContainer/MarginContainer"]
+visible = false
+margin_left = 8.0
+margin_top = 68.0
+margin_right = 680.0
+margin_bottom = 84.0
+text = "Disassembly Disabled While Running"
+align = 1
+valign = 1
+script = ExtResource( 10 )
+
 [node name="MemoryPanel" type="MarginContainer" parent="VBoxContainer"]
-margin_top = 142.0
+margin_top = 184.0
 margin_right = 1280.0
 margin_bottom = 960.0
 size_flags_vertical = 3
 custom_constants/margin_right = 8
 custom_constants/margin_left = 8
 custom_constants/margin_bottom = 8
+
+[node name="DisasmDisabledLabel" type="Label" parent="VBoxContainer/MemoryPanel"]
+margin_left = 8.0
+margin_top = 376.0
+margin_right = 1272.0
+margin_bottom = 392.0
+text = "Disassembly Disabled While Running"
 
 [node name="PanelContainer" type="PanelContainer" parent="VBoxContainer/MemoryPanel"]
 margin_left = 8.0

@@ -18,7 +18,7 @@ public class MemoryPageDisplay : Control
 
 	public override void _Ready()
 	{
-		_emulatedDevice = GetNode<EmulatedDevice>("/root/EmulatedDevice");
+		_emulatedDevice = Engine.EditorHint ? null : GetNode<EmulatedDevice>("/root/EmulatedDevice");
 
 		// Assume a monospace font
 		_font = GetFont("font");

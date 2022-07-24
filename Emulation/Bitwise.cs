@@ -21,6 +21,17 @@ namespace Hb8b.Emulation
         }
 
         /// <summary>
+        /// Gets a value indicating whether all of the bits in the specified mask are set within a byte.
+        /// </summary>
+        /// <param name="value">The byte to evaluate.</param>
+        /// <param name="mask">The mask of bits to consider.</param>
+        /// <returns><see langword="true"/> if all of the bits in the mask are set in <paramref name="byte"/>; otherwise, <see langword="false"/>.</returns>
+        public static Boolean IsSetMask(ref Byte value, Int32 mask)
+        {
+            return (value & mask) == mask;
+        }
+
+        /// <summary>
         /// Gets a value indicating whether a particular bit is cleared within a byte.
         /// </summary>
         /// <param name="value">The byte to evaluate.</param>
@@ -30,6 +41,17 @@ namespace Hb8b.Emulation
         public static Boolean IsClr(ref Byte value, Int32 bit)
         {
             return (value & (1 << bit)) == 0;
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether all of the bits in the specified mask are clear within a byte.
+        /// </summary>
+        /// <param name="value">The byte to evaluate.</param>
+        /// <param name="mask">The mask of bits to consider.</param>
+        /// <returns><see langword="true"/> if all of the bits in the mask are clear in <paramref name="byte"/>; otherwise, <see langword="false"/>.</returns>
+        public static Boolean IsClrMask(ref Byte value, Int32 mask)
+        {
+            return (value & mask) == 0;
         }
 
         /// <summary>

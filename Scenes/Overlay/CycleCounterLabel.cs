@@ -16,10 +16,6 @@ public class CycleCounterLabel : Label
     {
         var emulatedDevice = _emulatedDevice!;
 
-        Visible = emulatedDevice.Bus.Cpu.IsSuspended;
-        if (Visible)
-        {
-            Text = $"Cycle {emulatedDevice.Bus.TotalClockCyclesExecuted}";
-        }
+        Text = emulatedDevice.Bus.Cpu.IsSuspended ? $"Cycle {emulatedDevice.Bus.TotalClockCyclesExecuted}" : String.Empty;
     }
 }

@@ -29,6 +29,7 @@ namespace Hb8b.Emulation
             this.SystemRom.Memory[0xE001 - SystemRom.Offset] = 0x00;
             this.SystemRom.Memory[0xE002 - SystemRom.Offset] = 0xE0;
             this.Video = new Hb8bVideoCircuit(this);
+            this.Disassembler = new Disassembler(this);
             this.Reset();            
         }
 
@@ -149,6 +150,19 @@ namespace Hb8b.Emulation
         {
             var addrLo = Read(address);
             var addrHi = Read((UInt16)(address + 1));
+            return (UInt16)((addrHi << 8) | addrLo);
+        }
+
+        /// <summary>
+        /// Reads a 16-bit value at the specified address, and advances the value of the <param ref="address"/> parameter.
+        /// </summary>
+        /// <param name="address">The address from which to read a value.</param>
+        /// <returns>The 16-bit value that was read from the specified address.</returns>
+        public UInt16 Read16(ref UInt16 address)
+        {
+            var addrLo = Read(address);
+            var addrHi = Read((UInt16)(address + 1));
+            address += 2;
             return (UInt16)((addrHi << 8) | addrLo);
         }
 
@@ -274,6 +288,11 @@ namespace Hb8b.Emulation
         /// Gets the peripheral that represents the system's video generation circuit.
         /// </summary>
         public Hb8bVideoCircuit Video { get; }
+
+        /// <summary>
+        /// Gets the bus' disassembler.
+        /// </summary>
+        public Disassembler Disassembler { get; }
 
         /// <summary>
         /// Gets a value indicating whether any interrupts have been requested.

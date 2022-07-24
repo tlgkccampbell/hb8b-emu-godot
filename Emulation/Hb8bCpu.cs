@@ -20,8 +20,9 @@ namespace Hb8b.Emulation
         private Byte _x = MemoryAllocator.GetRandomByte();
         private Byte _y = MemoryAllocator.GetRandomByte();
 
-        // Cycle counters.
-        private UInt32 _cycleOverflowCount;
+        // Instruction truncation.
+        private UInt32 _truncationCycles;
+        private UInt16 _truncationAddr;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Hb8bCpu"/> class.
@@ -34,12 +35,8 @@ namespace Hb8b.Emulation
         /// <inheritdoc/>
         public override void Reset()
         {
-            // Set the program counter to the reset vector.
-            var resetVectorLo = Bus.Read(VectorAddressReset);
-            var resetVectorHi = Bus.Read(VectorAddressReset + 1);
-            _pc = (UInt16)((resetVectorHi << 8) | resetVectorLo);
-
             // Reset processor status.
+            _pc = Bus.Read16(VectorAddressReset);
             _status = (Byte)Hb8bCpuStatusFlags.U | (Byte)Hb8bCpuStatusFlags.I;
 
             // Reset execution status.
@@ -63,6 +60,8 @@ namespace Hb8b.Emulation
 
             while (remainingClockCycles > 0)
             {
+                _truncationAddr = _pc;
+
                 if (Bus.IsNmiRaised)
                 {
                     var intCycles = HandleInterrupt(0xFFFA, ref remainingClockCycles);
@@ -74,7 +73,7 @@ namespace Hb8b.Emulation
                     continue;
                 }
 
-                if (Bus.IsIrqAsserted && Bitwise.IsClr(ref _status, (Byte)Hb8bCpuStatusFlags.I) && !IsWaitingForInterrupt)
+                if (Bus.IsIrqAsserted && Bitwise.IsClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.I) && !IsWaitingForInterrupt)
                 {
                     var intCycles = HandleInterrupt(0xFFFE, ref remainingClockCycles);
                     IsWaitingForInterrupt = false;
@@ -102,8 +101,8 @@ namespace Hb8b.Emulation
                                     (Byte)Hb8bCpuStatusFlags.B |
                                     (Byte)Hb8bCpuStatusFlags.U);
 
-                                Bitwise.Clr(ref _status, (Byte)Hb8bCpuStatusFlags.D);
-                                Bitwise.Set(ref _status, (Byte)Hb8bCpuStatusFlags.I);
+                                Bitwise.ClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.D);
+                                Bitwise.SetMask(ref _status, (Byte)Hb8bCpuStatusFlags.I);
 
                                 var brkVectorLo = Bus.Read(VectorAddressIrq);
                                 var brkVectorHi = Bus.Read(VectorAddressIrq + 1);
@@ -131,16 +130,13 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 2, out instrCycles))
                                     break;
 
-                                _pc += 2;
+                                _pc += 1;
                             }
                             break;
 
                         case 0x03: // ??? (NOP)
                             {
-                                if (CheckTruncatedInstruction(remainingClockCycles, 1, out instrCycles))
-                                    break;
-
-                                _pc += 1;
+                                // 1-cycle NOP
                             }
                             break;
 
@@ -243,10 +239,7 @@ namespace Hb8b.Emulation
 
                         case 0x0B: // ??? (NOP)
                             {
-                                if (CheckTruncatedInstruction(remainingClockCycles, 1, out instrCycles))
-                                    break;
-
-                                _pc += 1;
+                                // 1-cycle NOP
                             }
                             break;
 
@@ -333,7 +326,7 @@ namespace Hb8b.Emulation
                                     extraCycles++;
 
                                 var branchTarget = _pc;
-                                var branchIsTaken = Bitwise.IsClr(ref _status, (Byte)Hb8bCpuStatusFlags.N);
+                                var branchIsTaken = Bitwise.IsClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.N);
                                 if (branchIsTaken)
                                 {
                                     extraCycles++;
@@ -381,10 +374,7 @@ namespace Hb8b.Emulation
 
                         case 0x13: // ??? (NOP)
                             {
-                                if (CheckTruncatedInstruction(remainingClockCycles, 1, out instrCycles))
-                                    break;
-
-                                _pc += 1;
+                                // 1-byte NOP
                             }
                             break;
 
@@ -455,7 +445,7 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 2, out instrCycles))
                                     break;
 
-                                Bitwise.Clr(ref _status, (Byte)Hb8bCpuStatusFlags.C);
+                                Bitwise.ClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.C);
                             }
                             break;
 
@@ -490,10 +480,7 @@ namespace Hb8b.Emulation
 
                         case 0x1B: // ??? (NOP)
                             {
-                                if (CheckTruncatedInstruction(remainingClockCycles, 1, out instrCycles))
-                                    break;
-
-                                _pc += 1;
+                                // 1-byte NOP
                             }
                             break;
 
@@ -606,16 +593,13 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 2, out instrCycles))
                                     break;
 
-                                _pc += 2;
+                                _pc += 1;
                             }
                             break;
 
                         case 0x23: // ??? (NOP)
                             {
-                                if (CheckTruncatedInstruction(remainingClockCycles, 1, out instrCycles))
-                                    break;
-
-                                _pc += 1;
+                                // 1-byte NOP
                             }
                             break;
 
@@ -630,8 +614,8 @@ namespace Hb8b.Emulation
                                 var result = (Byte)(_acc & data);
 
                                 SetStatusZ(result);
-                                Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.N, (data & (1 << 7)) != 0);
-                                Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.V, (data & (1 << 6)) == 0);
+                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.N, (data & (1 << 7)) != 0);
+                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.V, (data & (1 << 6)) == 0);
                             }
                             break;
 
@@ -657,7 +641,7 @@ namespace Hb8b.Emulation
                                 var addrZp = Bus.Read(_pc++);
 
                                 var data = Bus.Read(addrZp);
-                                var carry = (UInt16)(Bitwise.IsSet(ref _status, (Byte)Hb8bCpuStatusFlags.C) ? 1 : 0);
+                                var carry = (UInt16)(Bitwise.IsSetMask(ref _status, (Byte)Hb8bCpuStatusFlags.C) ? 1 : 0);
                                 var result = (UInt16)((data << 1) | carry);
 
                                 SetStatusCZN(result);
@@ -709,7 +693,7 @@ namespace Hb8b.Emulation
                                     break;
 
                                 var data = _acc;
-                                var carry = (UInt16)(Bitwise.IsSet(ref _status, (Byte)Hb8bCpuStatusFlags.C) ? 1 : 0);
+                                var carry = (UInt16)(Bitwise.IsSetMask(ref _status, (Byte)Hb8bCpuStatusFlags.C) ? 1 : 0);
                                 var result = (UInt16)((data << 1) | carry);
 
                                 SetStatusCZN(result);
@@ -720,10 +704,7 @@ namespace Hb8b.Emulation
 
                         case 0x2B: // ??? (NOP)
                             {
-                                if (CheckTruncatedInstruction(remainingClockCycles, 1, out instrCycles))
-                                    break;
-
-                                _pc += 1;
+                                // 1-byte NOP
                             }
                             break;
 
@@ -739,8 +720,8 @@ namespace Hb8b.Emulation
                                 var result = (Byte)(_acc & data);
 
                                 SetStatusZ(result);
-                                Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.N, (data & (1 << 7)) != 0);
-                                Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.V, (data & (1 << 6)) == 0);
+                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.N, (data & (1 << 7)) != 0);
+                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.V, (data & (1 << 6)) == 0);
                             }
                             break;
 
@@ -769,7 +750,7 @@ namespace Hb8b.Emulation
                                 _pc += 2;
 
                                 var data = Bus.Read(addrAbs);
-                                var carry = (UInt16)(Bitwise.IsSet(ref _status, (Byte)Hb8bCpuStatusFlags.C) ? 1 : 0);
+                                var carry = (UInt16)(Bitwise.IsSetMask(ref _status, (Byte)Hb8bCpuStatusFlags.C) ? 1 : 0);
                                 var result = (UInt16)((data << 1) | carry);
 
                                 SetStatusCZN(result);
@@ -811,7 +792,7 @@ namespace Hb8b.Emulation
                                     extraCycles++;
 
                                 var branchTarget = _pc;
-                                var branchIsTaken = Bitwise.IsSet(ref _status, (Byte)Hb8bCpuStatusFlags.N);
+                                var branchIsTaken = Bitwise.IsSetMask(ref _status, (Byte)Hb8bCpuStatusFlags.N);
                                 if (branchIsTaken)
                                 {
                                     extraCycles++;
@@ -859,10 +840,7 @@ namespace Hb8b.Emulation
 
                         case 0x33: // ??? (NOP)
                             {
-                                if (CheckTruncatedInstruction(remainingClockCycles, 1, out instrCycles))
-                                    break;
-
-                                _pc += 1;
+                                
                             }
                             break;
 
@@ -877,8 +855,8 @@ namespace Hb8b.Emulation
                                 var result = (Byte)(_acc & data);
 
                                 SetStatusZ(result);
-                                Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.N, (data & (1 << 7)) != 0);
-                                Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.V, (data & (1 << 6)) == 0);
+                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.N, (data & (1 << 7)) != 0);
+                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.V, (data & (1 << 6)) == 0);
                             }
                             break;
 
@@ -904,7 +882,7 @@ namespace Hb8b.Emulation
                                 var addrZp = (Byte)(Bus.Read(_pc++) + _x);
 
                                 var data = Bus.Read(addrZp);
-                                var carry = (UInt16)(Bitwise.IsSet(ref _status, (Byte)Hb8bCpuStatusFlags.C) ? 1 : 0);
+                                var carry = (UInt16)(Bitwise.IsSetMask(ref _status, (Byte)Hb8bCpuStatusFlags.C) ? 1 : 0);
                                 var result = (UInt16)((data << 1) | carry);
 
                                 SetStatusCZN(result);
@@ -932,7 +910,7 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 2, out instrCycles))
                                     break;
 
-                                Bitwise.Set(ref _status, (Byte)Hb8bCpuStatusFlags.C);
+                                Bitwise.SetMask(ref _status, (Byte)Hb8bCpuStatusFlags.C);
                             }
                             break;
 
@@ -967,10 +945,7 @@ namespace Hb8b.Emulation
 
                         case 0x3B: // ??? (NOP)
                             {
-                                if (CheckTruncatedInstruction(remainingClockCycles, 1, out instrCycles))
-                                    break;
-
-                                _pc += 1;
+                                
                             }
                             break;
 
@@ -1022,7 +997,7 @@ namespace Hb8b.Emulation
                                     break;
 
                                 var data = Bus.Read(addrAbsOffset);
-                                var carry = (UInt16)(Bitwise.IsSet(ref _status, (Byte)Hb8bCpuStatusFlags.C) ? 1 : 0);
+                                var carry = (UInt16)(Bitwise.IsSetMask(ref _status, (Byte)Hb8bCpuStatusFlags.C) ? 1 : 0);
                                 var result = (UInt16)((data << 1) | carry);
 
                                 SetStatusCZN(result);
@@ -1057,8 +1032,7 @@ namespace Hb8b.Emulation
                                     break;
 
                                 StackPop(out _status);
-                                Bitwise.Clr(ref _status, (Byte)Hb8bCpuStatusFlags.B);
-                                Bitwise.Clr(ref _status, (Byte)Hb8bCpuStatusFlags.U);
+                                Bitwise.ClrMask(ref _status, (Byte)(Hb8bCpuStatusFlags.B | Hb8bCpuStatusFlags.I));
 
                                 StackPop16(out _pc);
                             }
@@ -1084,16 +1058,13 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 2, out instrCycles))
                                     break;
 
-                                _pc += 2;
+                                _pc += 1;
                             }
                             break;
 
                         case 0x43: // ??? (NOP)
                             {
-                                if (CheckTruncatedInstruction(remainingClockCycles, 1, out instrCycles))
-                                    break;
-
-                                _pc += 1;
+                                // 1-cycle NOP
                             }
                             break;
 
@@ -1102,7 +1073,7 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 3, out instrCycles))
                                     break;
 
-                                _pc += 2;
+                                _pc += 1;
                             }
                             break;
 
@@ -1130,7 +1101,7 @@ namespace Hb8b.Emulation
                                 var data = Bus.Read(addrZp);
                                 var result = (Byte)(data >> 1);
 
-                                Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.C, (data & 0x01) == 1);
+                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.C, (data & 0x01) == 1);
                                 SetStatusZN(result);
 
                                 Bus.Write(addrZp, result);
@@ -1180,7 +1151,7 @@ namespace Hb8b.Emulation
                                 var data = _acc;
                                 var result = (Byte)(data >> 1);
 
-                                Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.C, (data & 0x01) == 1);
+                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.C, (data & 0x01) == 1);
                                 SetStatusZN(_acc);
 
                                 _acc = result;
@@ -1189,10 +1160,7 @@ namespace Hb8b.Emulation
 
                         case 0x4B: // ??? (NOP)
                             {
-                                if (CheckTruncatedInstruction(remainingClockCycles, 1, out instrCycles))
-                                    break;
-
-                                _pc += 1;
+                                
                             }
                             break;
 
@@ -1233,7 +1201,7 @@ namespace Hb8b.Emulation
                                 var data = Bus.Read(addrAbs);
                                 var result = (Byte)(data >> 1);
 
-                                Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.C, (data & 0x01) == 1);
+                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.C, (data & 0x01) == 1);
                                 SetStatusZN(result);
 
                                 Bus.Write(addrAbs, result);
@@ -1273,7 +1241,7 @@ namespace Hb8b.Emulation
                                     extraCycles++;
 
                                 var branchTarget = _pc;
-                                var branchIsTaken = Bitwise.IsClr(ref _status, (Byte)Hb8bCpuStatusFlags.V);
+                                var branchIsTaken = Bitwise.IsClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.V);
                                 if (branchIsTaken)
                                 {
                                     extraCycles++;
@@ -1321,10 +1289,7 @@ namespace Hb8b.Emulation
 
                         case 0x53: // ??? (NOP)
                             {
-                                if (CheckTruncatedInstruction(remainingClockCycles, 1, out instrCycles))
-                                    break;
-
-                                _pc += 1;
+                                // 1-cycle NOP
                             }
                             break;
 
@@ -1333,7 +1298,7 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 4, out instrCycles))
                                     break;
 
-                                _pc += 2;
+                                _pc += 1;
                             }
                             break;
 
@@ -1361,7 +1326,7 @@ namespace Hb8b.Emulation
                                 var data = Bus.Read(addrZp);
                                 var result = (Byte)(data >> 1);
 
-                                Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.C, (data & 0x01) == 1);
+                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.C, (data & 0x01) == 1);
                                 SetStatusZN(result);
 
                                 Bus.Write(addrZp, result);
@@ -1387,7 +1352,7 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 2, out instrCycles))
                                     break;
 
-                                Bitwise.Clr(ref _status, (Byte)Hb8bCpuStatusFlags.I);
+                                Bitwise.ClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.I);
                             }
                             break;
 
@@ -1420,10 +1385,7 @@ namespace Hb8b.Emulation
 
                         case 0x5B: // ??? (NOP)
                             {
-                                if (CheckTruncatedInstruction(remainingClockCycles, 1, out instrCycles))
-                                    break;
-
-                                _pc += 1;
+                                // 1-cycle NOP
                             }
                             break;
 
@@ -1432,7 +1394,7 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 8, out instrCycles))
                                     break;
 
-                                _pc += 3;
+                                _pc += 2;
                             }
                             break;
 
@@ -1464,7 +1426,7 @@ namespace Hb8b.Emulation
                                 var data = Bus.Read(addrAbsOffset);
                                 var result = (Byte)(data >> 1);
 
-                                Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.C, (data & 0x01) == 1);
+                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.C, (data & 0x01) == 1);
                                 SetStatusZN(result);
 
                                 Bus.Write(addrAbsOffset, result);
@@ -1524,16 +1486,13 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 2, out instrCycles))
                                     break;
 
-                                _pc += 2;
+                                _pc += 1;
                             }
                             break;
 
                         case 0x63: // ??? (NOP)
                             {
-                                if (CheckTruncatedInstruction(remainingClockCycles, 1, out instrCycles))
-                                    break;
-
-                                _pc += 1;
+                                // 1-cycle NOP
                             }
                             break;
 
@@ -1575,10 +1534,10 @@ namespace Hb8b.Emulation
                                 var addrZp = Bus.Read(_pc++);
 
                                 var data = Bus.Read(addrZp);
-                                var carry = (Byte)((Bitwise.IsSet(ref _status, (Byte)Hb8bCpuStatusFlags.C) ? 1 : 0) << 7);
+                                var carry = (Byte)((Bitwise.IsSetMask(ref _status, (Byte)Hb8bCpuStatusFlags.C) ? 1 : 0) << 7);
                                 var result = (Byte)((data >> 1) | carry);
 
-                                Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.C, (data & 0x01) != 0);
+                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.C, (data & 0x01) != 0);
                                 SetStatusZN(result);
 
                                 Bus.Write(addrZp, result);
@@ -1631,10 +1590,10 @@ namespace Hb8b.Emulation
                                     break;
 
                                 var data = _acc;
-                                var carry = (Byte)((Bitwise.IsSet(ref _status, (Byte)Hb8bCpuStatusFlags.C) ? 1 : 0) << 7);
+                                var carry = (Byte)((Bitwise.IsSetMask(ref _status, (Byte)Hb8bCpuStatusFlags.C) ? 1 : 0) << 7);
                                 var result = (Byte)((data >> 1) | carry);
 
-                                Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.C, (data & 0x01) != 0);
+                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.C, (data & 0x01) != 0);
                                 SetStatusZN(result);
 
                                 _acc = result;
@@ -1643,10 +1602,7 @@ namespace Hb8b.Emulation
 
                         case 0x6B: // ??? (NOP)
                             {
-                                if (CheckTruncatedInstruction(remainingClockCycles, 1, out instrCycles))
-                                    break;
-
-                                _pc += 1;
+                                // 1-cycle NOP
                             }
                             break;
 
@@ -1689,10 +1645,10 @@ namespace Hb8b.Emulation
                                 _pc += 2;
 
                                 var data = Bus.Read(addrAbs);
-                                var carry = (Byte)((Bitwise.IsSet(ref _status, (Byte)Hb8bCpuStatusFlags.C) ? 1 : 0) << 7);
+                                var carry = (Byte)((Bitwise.IsSetMask(ref _status, (Byte)Hb8bCpuStatusFlags.C) ? 1 : 0) << 7);
                                 var result = (Byte)((data >> 1) | carry);
 
-                                Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.C, (data & 0x01) != 0);
+                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.C, (data & 0x01) != 0);
                                 SetStatusZN(result);
 
                                 Bus.Write(addrAbs, result);
@@ -1732,7 +1688,7 @@ namespace Hb8b.Emulation
                                     extraCycles++;
 
                                 var branchTarget = _pc;
-                                var branchIsTaken = Bitwise.IsSet(ref _status, (Byte)Hb8bCpuStatusFlags.V);
+                                var branchIsTaken = Bitwise.IsSetMask(ref _status, (Byte)Hb8bCpuStatusFlags.V);
                                 if (branchIsTaken)
                                 {
                                     extraCycles++;
@@ -1786,10 +1742,7 @@ namespace Hb8b.Emulation
 
                         case 0x73: // ??? (NOP)
                             {
-                                if (CheckTruncatedInstruction(remainingClockCycles, 1, out instrCycles))
-                                    break;
-
-                                _pc += 1;
+                                // 1-byte NOP
                             }
                             break;
 
@@ -1831,10 +1784,10 @@ namespace Hb8b.Emulation
                                 var addrZp = (Byte)(Bus.Read(_pc++) + _x);
 
                                 var data = Bus.Read(addrZp);
-                                var carry = (Byte)((Bitwise.IsSet(ref _status, (Byte)Hb8bCpuStatusFlags.C) ? 1 : 0) << 7);
+                                var carry = (Byte)((Bitwise.IsSetMask(ref _status, (Byte)Hb8bCpuStatusFlags.C) ? 1 : 0) << 7);
                                 var result = (Byte)((data >> 1) | carry);
 
-                                Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.C, (data & 0x01) != 0);
+                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.C, (data & 0x01) != 0);
                                 SetStatusZN(result);
 
                                 Bus.Write(addrZp, result);
@@ -1860,7 +1813,7 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 2, out instrCycles))
                                     break;
 
-                                Bitwise.Set(ref _status, (Byte)Hb8bCpuStatusFlags.I);
+                                Bitwise.SetMask(ref _status, (Byte)Hb8bCpuStatusFlags.I);
                             }
                             break;
 
@@ -1900,10 +1853,7 @@ namespace Hb8b.Emulation
 
                         case 0x7B: // ??? (NOP)
                             {
-                                if (CheckTruncatedInstruction(remainingClockCycles, 1, out instrCycles))
-                                    break;
-
-                                _pc += 1;
+                                // 1-cycle NOP
                             }
                             break;
 
@@ -1952,10 +1902,10 @@ namespace Hb8b.Emulation
                                     break;
 
                                 var data = Bus.Read(addrAbsOffset);
-                                var carry = (Byte)((Bitwise.IsSet(ref _status, (Byte)Hb8bCpuStatusFlags.C) ? 1 : 0) << 7);
+                                var carry = (Byte)((Bitwise.IsSetMask(ref _status, (Byte)Hb8bCpuStatusFlags.C) ? 1 : 0) << 7);
                                 var result = (Byte)((data >> 1) | carry);
 
-                                Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.C, (data & 0x01) != 0);
+                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.C, (data & 0x01) != 0);
                                 SetStatusZN(result);
 
                                 Bus.Write(addrAbsOffset, result);
@@ -2020,16 +1970,13 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 2, out instrCycles))
                                     break;
 
-                                _pc += 2;
+                                _pc += 1;
                             }
                             break;
 
                         case 0x83: // ??? (NOP)
                             {
-                                if (CheckTruncatedInstruction(remainingClockCycles, 1, out instrCycles))
-                                    break;
-
-                                _pc += 1;
+                                // 1-cycle NOP
                             }
                             break;
 
@@ -2116,10 +2063,7 @@ namespace Hb8b.Emulation
 
                         case 0x8B: // ??? (NOP)
                             {
-                                if (CheckTruncatedInstruction(remainingClockCycles, 1, out instrCycles))
-                                    break;
-
-                                _pc += 1;
+                                // 1-cycle NOP
                             }
                             break;
 
@@ -2192,7 +2136,7 @@ namespace Hb8b.Emulation
                                     extraCycles++;
 
                                 var branchTarget = _pc;
-                                var branchIsTaken = Bitwise.IsClr(ref _status, (Byte)Hb8bCpuStatusFlags.C);
+                                var branchIsTaken = Bitwise.IsClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.C);
                                 if (branchIsTaken)
                                 {
                                     extraCycles++;
@@ -2234,10 +2178,7 @@ namespace Hb8b.Emulation
 
                         case 0x93: // ??? (NOP)
                             {
-                                if (CheckTruncatedInstruction(remainingClockCycles, 1, out instrCycles))
-                                    break;
-
-                                _pc += 1;
+                                // 1-cycle NOP
                             }
                             break;
 
@@ -2325,10 +2266,7 @@ namespace Hb8b.Emulation
 
                         case 0x9B: // ??? (NOP)
                             {
-                                if (CheckTruncatedInstruction(remainingClockCycles, 1, out instrCycles))
-                                    break;
-
-                                _pc += 1;
+                                // 1-cycle NOP
                             }
                             break;
 
@@ -2419,23 +2357,20 @@ namespace Hb8b.Emulation
                             }
                             break;
 
-                        case 0xA2: // LDA, IMM
+                        case 0xA2: // LDX, IMM
                             {
                                 if (CheckTruncatedInstruction(remainingClockCycles, 2, out instrCycles))
                                     break;
 
-                                _acc = Bus.Read(_pc++);
+                                _x = Bus.Read(_pc++);
 
-                                SetStatusZN(_acc);
+                                SetStatusZN(_x);
                             }
                             break;
 
                         case 0xA3: // ??? (NOP)
                             {
-                                if (CheckTruncatedInstruction(remainingClockCycles, 1, out instrCycles))
-                                    break;
-
-                                _pc += 1;
+                                // 1-cycle NOP
                             }
                             break;
 
@@ -2527,10 +2462,7 @@ namespace Hb8b.Emulation
 
                         case 0xAB: // ??? (NOP)
                             {
-                                if (CheckTruncatedInstruction(remainingClockCycles, 1, out instrCycles))
-                                    break;
-
-                                _pc += 1;
+                                // 1-cycle NOP
                             }
                             break;
 
@@ -2609,7 +2541,7 @@ namespace Hb8b.Emulation
                                     extraCycles++;
 
                                 var branchTarget = _pc;
-                                var branchIsTaken = Bitwise.IsSet(ref _status, (Byte)Hb8bCpuStatusFlags.C);
+                                var branchIsTaken = Bitwise.IsSetMask(ref _status, (Byte)Hb8bCpuStatusFlags.C);
                                 if (branchIsTaken)
                                 {
                                     extraCycles++;
@@ -2655,10 +2587,7 @@ namespace Hb8b.Emulation
 
                         case 0xB3: // ??? (NOP)
                             {
-                                if (CheckTruncatedInstruction(remainingClockCycles, 1, out instrCycles))
-                                    break;
-
-                                _pc += 1;
+                                // 1-cycle NOP
                             }
                             break;
 
@@ -2720,7 +2649,7 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 2, out instrCycles))
                                     break;
 
-                                Bitwise.Clr(ref _status, (Byte)Hb8bCpuStatusFlags.V);
+                                Bitwise.ClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.V);
                             }
                             break;
 
@@ -2752,10 +2681,7 @@ namespace Hb8b.Emulation
 
                         case 0xBB: // ??? (NOP)
                             {
-                                if (CheckTruncatedInstruction(remainingClockCycles, 1, out instrCycles))
-                                    break;
-
-                                _pc += 1;
+                                // 1-cycle NOP
                             }
                             break;
 
@@ -2838,7 +2764,7 @@ namespace Hb8b.Emulation
                                 var data = Bus.Read(_pc++);
                                 var result = (UInt16)(_y - data);
 
-                                Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.C, _y >= data);
+                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.C, _y >= data);
                                 SetStatusZN((Byte)result);
                             }
                             break;
@@ -2854,7 +2780,7 @@ namespace Hb8b.Emulation
                                 var data = Bus.Read(addrAbs);
                                 var result = (UInt16)(_acc - data);
 
-                                Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.C, _acc >= data);
+                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.C, _acc >= data);
                                 SetStatusZN((Byte)result);
                             }
                             break;
@@ -2864,16 +2790,13 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 2, out instrCycles))
                                     break;
 
-                                _pc += 2;
+                                _pc += 1;
                             }
                             break;
 
                         case 0xC3:
                             {
-                                if (CheckTruncatedInstruction(remainingClockCycles, 1, out instrCycles))
-                                    break;
-
-                                _pc += 1;
+                                // 1-cycle NOP
                             }
                             break;
 
@@ -2887,7 +2810,7 @@ namespace Hb8b.Emulation
                                 var data = Bus.Read(addrZp);
                                 var result = (UInt16)(_y - data);
 
-                                Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.C, _y >= data);
+                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.C, _y >= data);
                                 SetStatusZN((Byte)result);
                             }
                             break;
@@ -2902,7 +2825,7 @@ namespace Hb8b.Emulation
                                 var data = Bus.Read(addrZp);
                                 var result = (UInt16)(_acc - data);
 
-                                Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.C, _acc >= data);
+                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.C, _acc >= data);
                                 SetStatusZN((Byte)result);
                             }
                             break;
@@ -2956,7 +2879,7 @@ namespace Hb8b.Emulation
                                 var data = Bus.Read(_pc++);
                                 var result = (UInt16)(_acc - data);
 
-                                Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.C, _acc >= data);
+                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.C, _acc >= data);
                                 SetStatusZN((Byte)result);
                             }
                             break;
@@ -2992,7 +2915,7 @@ namespace Hb8b.Emulation
                                 var data = Bus.Read(addrAbs);
                                 var result = (UInt16)(_y - data);
 
-                                Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.C, _y >= data);
+                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.C, _y >= data);
                                 SetStatusZN((Byte)result);
                             }
                             break;
@@ -3008,7 +2931,7 @@ namespace Hb8b.Emulation
                                 var data = Bus.Read(addrAbs);
                                 var result = (UInt16)(_acc - data);
 
-                                Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.C, _acc >= data);
+                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.C, _acc >= data);
                                 SetStatusZN((Byte)result);
                             }
                             break;
@@ -3062,7 +2985,7 @@ namespace Hb8b.Emulation
                                     extraCycles++;
 
                                 var branchTarget = _pc;
-                                var branchIsTaken = Bitwise.IsClr(ref _status, (Byte)Hb8bCpuStatusFlags.Z);
+                                var branchIsTaken = Bitwise.IsClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.Z);
                                 if (branchIsTaken)
                                 {
                                     extraCycles++;
@@ -3089,7 +3012,7 @@ namespace Hb8b.Emulation
                                 var data = Bus.Read(addrAbs);
                                 var result = (UInt16)(_acc - data);
 
-                                Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.C, _acc >= data);
+                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.C, _acc >= data);
                                 SetStatusZN((Byte)result);
                             }
                             break;
@@ -3105,17 +3028,14 @@ namespace Hb8b.Emulation
                                 var data = Bus.Read(addrAbs);
                                 var result = (UInt16)(_acc - data);
 
-                                Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.C, _acc >= data);
+                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.C, _acc >= data);
                                 SetStatusZN((Byte)result);
                             }
                             break;
 
                         case 0xD3:
                             {
-                                if (CheckTruncatedInstruction(remainingClockCycles, 1, out instrCycles))
-                                    break;
-
-                                // NOP
+                                // 1-cycle NOP
                             }
                             break;
 
@@ -3124,7 +3044,7 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 4, out instrCycles))
                                     break;
 
-                                // NOP
+                                _pc += 1;
                             }
                             break;
 
@@ -3138,7 +3058,7 @@ namespace Hb8b.Emulation
                                 var data = Bus.Read(addrZp);
                                 var result = (UInt16)(_acc - data);
 
-                                Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.C, _acc >= data);
+                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.C, _acc >= data);
                                 SetStatusZN((Byte)result);
                             }
                             break;
@@ -3177,7 +3097,7 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 2, out instrCycles))
                                     break;
 
-                                Bitwise.Clr(ref _status, (Byte)Hb8bCpuStatusFlags.D);
+                                Bitwise.ClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.D);
                             }
                             break;
 
@@ -3195,7 +3115,7 @@ namespace Hb8b.Emulation
                                 var data = Bus.Read(addrAbsOffset);
                                 var result = (UInt16)(_acc - data);
 
-                                Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.C, _acc >= data);
+                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.C, _acc >= data);
                                 SetStatusZN((Byte)result);
                             }
                             break;
@@ -3223,7 +3143,7 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 4, out instrCycles))
                                     break;
 
-                                _pc += 3;
+                                _pc += 2;
                             }
                             break;
 
@@ -3241,7 +3161,7 @@ namespace Hb8b.Emulation
                                 var data = Bus.Read(addrAbsOffset);
                                 var result = (UInt16)(_acc - data);
 
-                                Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.C, _acc >= data);
+                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.C, _acc >= data);
                                 SetStatusZN((Byte)result);
                             }
                             break;
@@ -3294,7 +3214,7 @@ namespace Hb8b.Emulation
                                 var data = Bus.Read(_pc++);
                                 var result = (UInt16)(_x - data);
 
-                                Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.C, _x >= data);
+                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.C, _x >= data);
                                 SetStatusZN((Byte)result);
                             }
                             break;
@@ -3322,16 +3242,13 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 2, out instrCycles))
                                     break;
 
-                                _pc += 2;
+                                _pc += 1;
                             }
                             break;
 
                         case 0xE3: // ??? (NOP)
                             {
-                                if (CheckTruncatedInstruction(remainingClockCycles, 1, out instrCycles))
-                                    break;
-
-                                _pc += 1;
+                                // 1-cycle NOP
                             }
                             break;
 
@@ -3345,7 +3262,7 @@ namespace Hb8b.Emulation
                                 var data = Bus.Read(addrZp);
                                 var result = (UInt16)(_x - data);
 
-                                Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.C, _x >= data);
+                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.C, _x >= data);
                                 SetStatusZN((Byte)result);
                             }
                             break;
@@ -3426,17 +3343,12 @@ namespace Hb8b.Emulation
                             {
                                 if (CheckTruncatedInstruction(remainingClockCycles, 2, out instrCycles))
                                     break;
-
-                                _pc += 1;
                             }
                             break;
 
                         case 0xEB: // ??? (NOP)
                             {
-                                if (CheckTruncatedInstruction(remainingClockCycles, 1, out instrCycles))
-                                    break;
-
-                                _pc += 1;
+                                // 1-cycle NOP
                             }
                             break;
 
@@ -3451,7 +3363,7 @@ namespace Hb8b.Emulation
                                 var data = Bus.Read(addrAbs);
                                 var result = (UInt16)(_x - data);
 
-                                Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.C, _x >= data);
+                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.C, _x >= data);
                                 SetStatusZN((Byte)result);
                             }
                             break;
@@ -3507,7 +3419,7 @@ namespace Hb8b.Emulation
                                     extraCycles++;
 
                                 var branchTarget = _pc;
-                                var branchIsTaken = Bitwise.IsSet(ref _status, (Byte)Hb8bCpuStatusFlags.Z);
+                                var branchIsTaken = Bitwise.IsSetMask(ref _status, (Byte)Hb8bCpuStatusFlags.Z);
                                 if (branchIsTaken)
                                 {
                                     extraCycles++;
@@ -3561,10 +3473,7 @@ namespace Hb8b.Emulation
 
                         case 0xF3: // ??? (NOP)
                             {
-                                if (CheckTruncatedInstruction(remainingClockCycles, 1, out instrCycles))
-                                    break;
-
-                                _pc += 1;
+                                // 1-cycle NOP
                             }
                             break;
 
@@ -3573,7 +3482,7 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 4, out instrCycles))
                                     break;
 
-                                _pc += 2;
+                                _pc += 1;
                             }
                             break;
 
@@ -3629,7 +3538,7 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 2, out instrCycles))
                                     break;
 
-                                Bitwise.Set(ref _status, (Byte)Hb8bCpuStatusFlags.D);
+                                Bitwise.SetMask(ref _status, (Byte)Hb8bCpuStatusFlags.D);
                             }
                             break;
 
@@ -3667,10 +3576,7 @@ namespace Hb8b.Emulation
 
                         case 0xFB: // ??? (NOP)
                             {
-                                if (CheckTruncatedInstruction(remainingClockCycles, 1, out instrCycles))
-                                    break;
-
-                                _pc += 1;
+                                // 1-cycle NOP
                             }
                             break;
 
@@ -3679,7 +3585,7 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 4, out instrCycles))
                                     break;
 
-                                _pc += 3;
+                                _pc += 2;
                             }
                             break;
 
@@ -3749,10 +3655,6 @@ namespace Hb8b.Emulation
                     }
 
                     ClockPeripherals(instrCycles);
-
-                    if (instrCycles > remainingClockCycles)
-                        Console.WriteLine("DEBUG");
-
                     remainingClockCycles -= instrCycles;
 
                     if (singleStepInstruction)
@@ -3808,9 +3710,18 @@ namespace Hb8b.Emulation
         public Byte StackPointer => _stkp;
 
         /// <summary>
+        /// Gets the value of the status register.
+        /// </summary>
+        public Byte StatusRegister => _status;
+
+        /// <summary>
         /// Gets the address in the program counter register.
         /// </summary>
-        public UInt16 ProgramCounter => _pc;
+        public UInt16 ProgramCounter
+        {
+            get => _pc;
+            set => _pc = value;
+        }
 
         /// <summary>
         /// Allocates cycles to the executing instruction, truncating it if it would pass outside of the total number
@@ -3823,14 +3734,15 @@ namespace Hb8b.Emulation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private Boolean CheckTruncatedInstruction(UInt32 remaining, UInt32 required, out UInt32 allocated)
         {
-            required = _cycleOverflowCount > 0 ? _cycleOverflowCount : required;
+            required = _truncationCycles > 0 ? _truncationCycles : required;
             if (remaining < required)
             {
-                _cycleOverflowCount = required - remaining;
+                _truncationCycles = required - remaining;
+                _pc = _truncationAddr;
                 allocated = remaining;
                 return true;
             }
-            _cycleOverflowCount = 0;
+            _truncationCycles = 0;
             allocated = required;
             return false;
         }
@@ -3852,8 +3764,8 @@ namespace Hb8b.Emulation
             StackPush16(_pc);
             StackPush(_status | (Byte)Hb8bCpuStatusFlags.U);
 
-            Bitwise.Clr(ref _status, (Byte)Hb8bCpuStatusFlags.D);
-            Bitwise.Set(ref _status, (Byte)Hb8bCpuStatusFlags.I);
+            Bitwise.ClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.D);
+            Bitwise.SetMask(ref _status, (Byte)Hb8bCpuStatusFlags.I);
 
             _pc = Bus.Read16(addrVector);
 
@@ -3937,7 +3849,7 @@ namespace Hb8b.Emulation
         private void SetStatusV(Byte m, Byte n, Byte r)
         {
             var v = ((m ^ r) & (n ^ r) & 0x80) != 0;
-            Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.V, v);
+            Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.V, v);
         }
 
         /// <summary>
@@ -3947,7 +3859,7 @@ namespace Hb8b.Emulation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void SetStatusZ(Byte value)
         {
-            Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.Z, (value & 0xFF) == 0);
+            Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.Z, (value & 0xFF) == 0);
         }
 
         /// <summary>
@@ -3957,8 +3869,8 @@ namespace Hb8b.Emulation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void SetStatusZN(Byte value)
         {
-            Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.Z, (value & 0xFF) == 0);
-            Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.N, (value & 0x80) != 0);
+            Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.Z, (value & 0xFF) == 0);
+            Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.N, (value & 0x80) != 0);
         }
 
         /// <summary>
@@ -3968,9 +3880,9 @@ namespace Hb8b.Emulation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void SetStatusCZN(UInt16 value)
         {
-            Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.C, value >= 256);
-            Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.Z, (value & 0xFF) == 0);
-            Bitwise.SetOrClr(ref _status, (Byte)Hb8bCpuStatusFlags.N, (value & 0x80) != 0);
+            Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.C, value >= 256);
+            Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.Z, (value & 0xFF) == 0);
+            Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.N, (value & 0x80) != 0);
         }
     }
 }
