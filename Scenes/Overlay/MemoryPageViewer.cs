@@ -1,0 +1,33 @@
+using Godot;
+using System;
+using System.IO;
+
+public class MemoryPageViewer : VBoxContainer
+{
+    private EmulatedDevice? _emulatedDevice;
+    private FileDialog? _romFileDialog;
+
+    public override void _Ready()
+    {
+        _emulatedDevice = GetNode<EmulatedDevice>("/root/EmulatedDevice");
+        _romFileDialog = GetNode<FileDialog>("RomFileDialog");
+    }
+
+    public void _on_RomLoadButton_pressed()
+    {
+        _romFileDialog!.PopupCentered();
+    }
+
+    public void _on_RomFileDialog_file_selected(String path)
+    {
+        var device = _emulatedDevice!;
+        device.Bus.Cpu.IsStopped = true;
+
+        var data = System.IO.File.ReadAllBytes(path);
+        var srom = _emulatedDevice!.Bus.SystemRom.Memory;
+        Array.Copy(data, srom, srom.Length);
+
+        device.Bus.Reset();
+        device.Bus.Cpu.IsStopped = false;
+    }
+}

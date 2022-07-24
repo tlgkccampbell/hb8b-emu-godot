@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-#nullable enable
 
 namespace Hb8b.Emulation
 {

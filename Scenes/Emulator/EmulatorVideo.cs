@@ -3,13 +3,13 @@ using System;
 
 public class EmulatorVideo : Node
 {
-    public Hb8b.Emulation.Hb8bSystemBus Bus { get; set; }
-
-    private TileMap _tilemap;
+    private EmulatedDevice? _emulatedDevice;
+    private TileMap? _tilemap;
 
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
     {
+        _emulatedDevice = GetNode<EmulatedDevice>("/root/EmulatedDevice");
         _tilemap = GetNode<TileMap>("TileMap");
 
         for (var y = 0; y < 60; y++) 
@@ -26,7 +26,8 @@ public class EmulatorVideo : Node
     {
         const Int32 TileMapWidth = 32;
 
-        var vram = Bus.Video.Memory;
+        var vram = _emulatedDevice!.Bus.Video.Memory;
+        var tilemap = _tilemap!;
 
         for (var y = 0; y < 60; y++) 
         {
@@ -37,7 +38,7 @@ public class EmulatorVideo : Node
                 var tileIndexY = tileIndex / TileMapWidth;
                 var tileCoord = new Vector2(tileIndexX, tileIndexY);
 
-                _tilemap.SetCell(x, y, 0, autotileCoord: tileCoord);
+                tilemap.SetCell(x, y, 0, autotileCoord: tileCoord);
             }
         }
     }

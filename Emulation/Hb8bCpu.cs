@@ -1,6 +1,5 @@
 using System;
 using System.Runtime.CompilerServices;
-#nullable enable
 
 namespace Hb8b.Emulation
 {
@@ -3754,6 +3753,31 @@ namespace Hb8b.Emulation
         /// will resume when an interrupt is signaled.
         /// </summary>
         public Boolean IsWaitingForInterrupt { get; set; } = false;
+
+        /// <summary>
+        /// Gets the value in the accumulator.
+        /// </summary>
+        public Byte Accumulator => _acc;
+
+        /// <summary>
+        /// Gets the value in the X register.
+        /// </summary>
+        public Byte XRegister => _x;
+
+        /// <summary>
+        /// Gets the value in the Y register.
+        /// </summary>
+        public Byte YRegister => _y;
+
+        /// <summary>
+        /// Gets the value of the stack pointer.
+        /// </summary>
+        public Byte StackPointer => _stkp;
+
+        /// <summary>
+        /// Gets the address in the program counter register.
+        /// </summary>
+        public UInt16 ProgramCounter => _pc;
 
         /// <summary>
         /// Allocates cycles to the executing instruction, truncating it if it would pass outside of the total number

@@ -13,11 +13,14 @@ config_version=4
 config/name="Homebrew 8-bit Emulator"
 run/main_scene="res://Scenes/Emulator/Emulator.tscn"
 
+[autoload]
+
+EmulatedDevice="*res://Scenes/EmulatedDevice/EmulatedDevice.tscn"
+
 [display]
 
 window/size/width=1280
 window/size/height=960
-window/stretch/mode="viewport"
 window/stretch/aspect="keep_width"
 
 [input]
