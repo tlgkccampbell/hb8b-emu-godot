@@ -21,13 +21,11 @@ public class MemoryPageViewer : VBoxContainer
     public void _on_RomFileDialog_file_selected(String path)
     {
         var device = _emulatedDevice!;
-        device.Bus.Cpu.IsStopped = true;
+        device.Bus.Cpu.IsSuspended = true;
 
-        var data = System.IO.File.ReadAllBytes(path);
-        var srom = _emulatedDevice!.Bus.SystemRom.Memory;
-        Array.Copy(data, srom, srom.Length);
+        _emulatedDevice!.Bus.LoadRom(path);
 
         device.Bus.Reset();
-        device.Bus.Cpu.IsStopped = false;
+        device.Bus.Cpu.IsSuspended = true;
     }
 }

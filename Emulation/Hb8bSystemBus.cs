@@ -11,8 +11,8 @@ namespace Hb8b.Emulation
     {
         private readonly HashSet<Hb8bPeripheral> _irqs = new HashSet<Hb8bPeripheral>();
         private Boolean _nmiRaised;
-        private Int32 _clockCyclesUntilNewFrame;
-        private Int32 _clockCyclesTotal;
+        private UInt32 _clockCyclesUntilNewFrame;
+        private UInt64 _clockCyclesTotal;
         private Byte _openBusValue = MemoryAllocator.GetRandomByte();
 
         /// <summary>
@@ -21,15 +21,43 @@ namespace Hb8b.Emulation
         public Hb8bSystemBus()
         {
             this.Cpu = new Hb8bCpu(this);
-            this.SystemRam = new Hb8bSystemMemory(this, 0x0000, 0x2000);
-            this.SystemRom = new Hb8bSystemMemory(this, 0xE000, 0x2000, fill: 0xEA);
-            this.SystemRom.Memory[0xFFFC - 0xE000] = 0x00;
-            this.SystemRom.Memory[0xFFFD - 0xE000] = 0xE0;
-            this.SystemRom.Memory[0xE000 - 0xE000] = 0x4C;
-            this.SystemRom.Memory[0xE001 - 0xE000] = 0x00;
-            this.SystemRom.Memory[0xE002 - 0xE000] = 0xE0;
+            this.SystemRam = new Hb8bSystemMemory(this, 0x0000, 0x8000);
+            this.SystemRom = new Hb8bSystemMemory(this, 0x8000, 0x8000, fill: 0xEA);
+            this.SystemRom.Memory[0xFFFC - SystemRom.Offset] = 0x00;
+            this.SystemRom.Memory[0xFFFD - SystemRom.Offset] = 0xE0;
+            this.SystemRom.Memory[0xE000 - SystemRom.Offset] = 0x4C;
+            this.SystemRom.Memory[0xE001 - SystemRom.Offset] = 0x00;
+            this.SystemRom.Memory[0xE002 - SystemRom.Offset] = 0xE0;
             this.Video = new Hb8bVideoCircuit(this);
             this.Reset();            
+        }
+
+        /// <summary>
+        /// Loads a ROM into the system's address space.
+        /// </summary>
+        /// <param name="path"></param>
+        public void LoadRom(String path)
+        {
+            var data = System.IO.File.ReadAllBytes(path);
+
+            // ROM contains RAM + ROM
+            if (data.Length == SystemRam.Memory.Length + SystemRom.Memory.Length)
+            {
+                Array.Copy(data, SystemRam.Memory, SystemRam.Memory.Length);
+                Array.Copy(data, SystemRam.Memory.Length, SystemRom.Memory, 0, SystemRom.Memory.Length);
+
+                return;
+            }
+
+            // ROM contains ROM only
+            if (data.Length == SystemRom.Memory.Length)
+            {
+                Array.Copy(data, SystemRom.Memory, data.Length);
+
+                return;
+            }
+
+            throw new InvalidOperationException("ROM size mismatch.");
         }
 
         /// <summary>
@@ -50,14 +78,43 @@ namespace Hb8b.Emulation
         }
 
         /// <summary>
+        /// Advances the system clock by the specified number of cycles.
+        /// </summary>
+        /// <param name="cycles">The number of cycles by which the system clock was advanced.</param>
+        /// <param name="stepped">A value indicating whether the system clock is being manually stepped forward.</param>
+        public void Clock(UInt32 cycles, Boolean stepped)
+        {
+            var executed = Cpu.Clock(cycles, stepped);
+
+            _clockCyclesTotal += executed;
+            _clockCyclesUntilNewFrame -= executed;
+
+            while (_clockCyclesUntilNewFrame <= 0)
+                _clockCyclesUntilNewFrame += Hb8bVideoCircuit.Timings.TotalSystemClocksPerFrame;
+        }
+
+        /// <summary>
         /// Advances the system clock until the next video frame is available.
         /// </summary>
         public void ClockUntilNextFrame()
         {
-            Cpu.Clock(_clockCyclesUntilNewFrame);
+            Clock(_clockCyclesUntilNewFrame, false);
+        }
 
-            _clockCyclesTotal += _clockCyclesUntilNewFrame;
-            _clockCyclesUntilNewFrame = Hb8bVideoCircuit.Timings.TotalSystemClocksPerFrame;
+        /// <summary>
+        /// Advances the system clock by one cycle.
+        /// </summary>
+        public void SingleStepCycle()
+        {
+            Clock(1, true);
+        }
+
+        /// <summary>
+        /// Advances the system clock until the start of the next instruction.
+        /// </summary>
+        public void SingleStepInstruction()
+        {
+            Clock(0, true);
         }
 
         /// <summary>
@@ -232,7 +289,12 @@ namespace Hb8b.Emulation
         /// Gets a value indicating whether any peripherals have raised a non-maskable interrupt.
         /// </summary>
         public Boolean IsNmiRaised => _nmiRaised;
-        
+
+        /// <summary>
+        /// Gets the total number of clock cycles that the system has executed since reset.
+        /// </summary>
+        public UInt64 TotalClockCyclesExecuted => _clockCyclesTotal;
+
         /// <summary>
         /// Gets the device number associated with the specified memory address.
         /// </summary>

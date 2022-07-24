@@ -28,6 +28,6 @@ public class RegisterValues : VBoxContainer
         _xValueLabel!.Text = $"${_emulatedDevice!.Bus.Cpu.XRegister:X2}";
         _yValueLabel!.Text = $"${_emulatedDevice!.Bus.Cpu.YRegister:X2}";
         _stkpValueLabel!.Text = $"${_emulatedDevice!.Bus.Cpu.StackPointer:X2}";
-        _pcValueLabel!.Text = $"${_emulatedDevice!.Bus.Cpu.ProgramCounter:X2}";
+        _pcValueLabel!.Text = $"${_emulatedDevice!.Bus.Cpu.ProgramCounter:X4}";
     }
 }

@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=2]
+[gd_scene load_steps=12 format=2]
 
 [ext_resource path="res://Scenes/Overlay/FPSLabel.cs" type="Script" id=1]
 [ext_resource path="res://Scenes/Overlay/Overlay.cs" type="Script" id=2]
@@ -6,6 +6,8 @@
 [ext_resource path="res://Assets/Fonts/font_c64.ttf" type="DynamicFontData" id=4]
 [ext_resource path="res://Scenes/Overlay/MemoryPageDisplay.cs" type="Script" id=5]
 [ext_resource path="res://Scenes/Overlay/MemoryPageViewer.cs" type="Script" id=6]
+[ext_resource path="res://Scenes/Overlay/RunningStoppedLabel.cs" type="Script" id=7]
+[ext_resource path="res://Scenes/Overlay/CycleCounterLabel.cs" type="Script" id=8]
 
 [sub_resource type="DynamicFont" id=1]
 font_data = ExtResource( 4 )
@@ -73,6 +75,25 @@ size_flags_horizontal = 0
 size_flags_vertical = 0
 text = "60 FPS"
 script = ExtResource( 1 )
+
+[node name="RunningStoppedLabel" type="Label" parent="VBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer"]
+margin_top = 20.0
+margin_right = 112.0
+margin_bottom = 36.0
+size_flags_horizontal = 0
+size_flags_vertical = 0
+text = "Stopped"
+script = ExtResource( 7 )
+
+[node name="CycleCounterLabel" type="Label" parent="VBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer"]
+margin_top = 40.0
+margin_right = 224.0
+margin_bottom = 96.0
+size_flags_horizontal = 0
+size_flags_vertical = 3
+text = "Cycle 12346578"
+valign = 2
+script = ExtResource( 8 )
 
 [node name="RegisterDisplay" type="HBoxContainer" parent="VBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer"]
 margin_left = 1070.0

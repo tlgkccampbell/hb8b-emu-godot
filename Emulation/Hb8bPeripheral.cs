@@ -22,12 +22,6 @@ namespace Hb8b.Emulation
         public virtual void Reset() { }
 
         /// <summary>
-        /// Advances the peripheral's state by the specified number of clock cycles.
-        /// </summary>
-        /// <param name="cycles">The number of clock cycles by which to advance the peripheral's state.</param>
-        public virtual void Clock(Int32 cycles) { }
-
-        /// <summary>
         /// Gets the system bus to which this peripheral is attached.
         /// </summary>
         public Hb8bSystemBus Bus { get; }
