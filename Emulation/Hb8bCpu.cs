@@ -23,6 +23,7 @@ namespace Hb8b.Emulation
         // Instruction truncation.
         private UInt32 _truncationCycles;
         private UInt16 _truncationAddr;
+        private Byte _truncationOpenBus;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Hb8bCpu"/> class.
@@ -61,6 +62,7 @@ namespace Hb8b.Emulation
             while (remainingClockCycles > 0)
             {
                 _truncationAddr = _pc;
+                _truncationOpenBus = Bus.OpenBusValue;
 
                 if (Bus.IsNmiRaised)
                 {
@@ -104,9 +106,7 @@ namespace Hb8b.Emulation
                                 Bitwise.ClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.D);
                                 Bitwise.SetMask(ref _status, (Byte)Hb8bCpuStatusFlags.I);
 
-                                var brkVectorLo = Bus.Read(VectorAddressIrq);
-                                var brkVectorHi = Bus.Read(VectorAddressIrq + 1);
-                                _pc = (UInt16)((brkVectorHi << 8) | brkVectorLo);
+                                _pc = Bus.Read16(VectorAddressIrq);
                             }
                             break;
 
@@ -3736,6 +3736,7 @@ namespace Hb8b.Emulation
             required = _truncationCycles > 0 ? _truncationCycles : required;
             if (remaining < required)
             {
+                Bus.OpenBusValue = _truncationOpenBus;
                 _truncationCycles = required - remaining;
                 _pc = _truncationAddr;
                 allocated = remaining;

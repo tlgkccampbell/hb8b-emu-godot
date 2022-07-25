@@ -13,7 +13,6 @@ namespace Hb8b.Emulation
         private Boolean _nmiRaised;
         private UInt32 _clockCyclesUntilNewFrame;
         private UInt64 _clockCyclesTotal;
-        private Byte _openBusValue = MemoryAllocator.GetRandomByte();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Hb8bSystemBus"/> class.
@@ -129,15 +128,21 @@ namespace Hb8b.Emulation
             switch (device)
             {
                 case 0:
-                    _openBusValue = SystemRam.Memory[address];
+                case 1:
+                case 2:
+                case 3:
+                    OpenBusValue = SystemRam.Memory[address];
                     break;
 
+                case 4:
+                case 5:
+                case 6:
                 case 7:
-                    _openBusValue = SystemRom.Memory[address - SystemRom.Offset];
+                    OpenBusValue = SystemRom.Memory[address - SystemRom.Offset];
                     break;
             }
 
-            return _openBusValue;
+            return OpenBusValue;
         }
 
         /// <summary>
@@ -192,16 +197,22 @@ namespace Hb8b.Emulation
             switch (device)
             {
                 case 0:
+                case 1:
+                case 2:
+                case 3:
                     Array.Copy(SystemRam.Memory, address, buffer, 0, 256);
                     break;
 
+                case 4:
+                case 5:
+                case 6:
                 case 7:
                     Array.Copy(SystemRom.Memory, address - SystemRom.Offset, buffer, 0, 256);
                     break;
             }
 
             for (var i = 0; i < buffer.Length; i++)
-                buffer[i] = _openBusValue;
+                buffer[i] = OpenBusValue;
         }
 
         /// <summary>
@@ -211,13 +222,23 @@ namespace Hb8b.Emulation
         /// <param name="value">The value to write to the specified address.</param>
         public void Write(UInt16 address, Byte value)
         {
-            _openBusValue = value;
+            OpenBusValue = value;
 
             var device = GetDeviceNumber(address);
             switch (device)
             {
                 case 0:
+                case 1:
+                case 2:
+                case 3:
                     SystemRam.Memory[address] = value;
+                    break;
+                    
+                case 4:
+                case 5:
+                case 6:
+                case 7:
+                    SystemRom.Memory[address] = value;
                     break;
             }
         }
@@ -293,6 +314,11 @@ namespace Hb8b.Emulation
         /// Gets the bus' disassembler.
         /// </summary>
         public Disassembler Disassembler { get; }
+
+        /// <summary>
+        /// Gets or sets the value that is read when reading from an open bus.
+        /// </summary>
+        public Byte OpenBusValue { get; set; } = MemoryAllocator.GetRandomByte();
 
         /// <summary>
         /// Gets a value indicating whether any interrupts have been requested.

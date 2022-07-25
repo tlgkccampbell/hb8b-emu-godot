@@ -53,11 +53,11 @@ custom_constants/separation = 8
 
 [node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer"]
 margin_right = 1280.0
-margin_bottom = 176.0
+margin_bottom = 320.0
 
 [node name="StatusPanel" type="MarginContainer" parent="VBoxContainer/HBoxContainer"]
 margin_right = 556.0
-margin_bottom = 176.0
+margin_bottom = 320.0
 custom_constants/margin_top = 8
 custom_constants/margin_left = 8
 
@@ -65,13 +65,13 @@ custom_constants/margin_left = 8
 margin_left = 8.0
 margin_top = 8.0
 margin_right = 556.0
-margin_bottom = 176.0
+margin_bottom = 320.0
 
 [node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer"]
 margin_left = 7.0
 margin_top = 7.0
 margin_right = 541.0
-margin_bottom = 161.0
+margin_bottom = 305.0
 custom_constants/margin_right = 8
 custom_constants/margin_top = 8
 custom_constants/margin_left = 8
@@ -81,11 +81,11 @@ custom_constants/margin_bottom = 8
 margin_left = 8.0
 margin_top = 8.0
 margin_right = 526.0
-margin_bottom = 146.0
+margin_bottom = 290.0
 
 [node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer"]
 margin_right = 350.0
-margin_bottom = 138.0
+margin_bottom = 282.0
 size_flags_horizontal = 3
 
 [node name="FPSLabel" type="Label" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer"]
@@ -108,7 +108,7 @@ script = ExtResource( 7 )
 [node name="CycleCounterLabel" type="Label" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer"]
 margin_top = 40.0
 margin_right = 350.0
-margin_bottom = 138.0
+margin_bottom = 282.0
 rect_min_size = Vector2( 350, 0 )
 size_flags_horizontal = 0
 size_flags_vertical = 3
@@ -120,16 +120,16 @@ script = ExtResource( 8 )
 [node name="VBoxContainer2" type="VBoxContainer" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer"]
 margin_left = 354.0
 margin_right = 518.0
-margin_bottom = 138.0
+margin_bottom = 282.0
 
 [node name="RegisterDisplay" type="HBoxContainer" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer2"]
 margin_right = 164.0
-margin_bottom = 118.0
+margin_bottom = 262.0
 size_flags_vertical = 3
 
 [node name="RegisterLabels" type="VBoxContainer" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer2/RegisterDisplay"]
 margin_right = 80.0
-margin_bottom = 118.0
+margin_bottom = 262.0
 
 [node name="ARegisterLabel" type="Label" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer2/RegisterDisplay/RegisterLabels"]
 margin_right = 80.0
@@ -168,7 +168,7 @@ align = 2
 [node name="RegisterValues" type="VBoxContainer" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer2/RegisterDisplay"]
 margin_left = 84.0
 margin_right = 164.0
-margin_bottom = 118.0
+margin_bottom = 262.0
 script = ExtResource( 3 )
 
 [node name="ARegisterValue" type="Label" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer2/RegisterDisplay/RegisterValues"]
@@ -202,9 +202,9 @@ text = "$FFFF"
 
 [node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer2"]
 margin_left = 4.0
-margin_top = 122.0
+margin_top = 266.0
 margin_right = 160.0
-margin_bottom = 138.0
+margin_bottom = 282.0
 size_flags_horizontal = 4
 
 [node name="StatusBitLabelN" type="Label" parent="VBoxContainer/HBoxContainer/StatusPanel/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer2/HBoxContainer"]
@@ -273,7 +273,7 @@ StatusBit = 1
 [node name="DisasmPanel" type="MarginContainer" parent="VBoxContainer/HBoxContainer"]
 margin_left = 560.0
 margin_right = 1280.0
-margin_bottom = 176.0
+margin_bottom = 320.0
 size_flags_horizontal = 3
 custom_constants/margin_right = 8
 custom_constants/margin_top = 8
@@ -283,17 +283,17 @@ custom_constants/margin_left = 8
 margin_left = 8.0
 margin_top = 8.0
 margin_right = 712.0
-margin_bottom = 176.0
+margin_bottom = 320.0
 
 [node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/HBoxContainer/DisasmPanel/PanelContainer"]
 margin_left = 7.0
 margin_top = 7.0
 margin_right = 697.0
-margin_bottom = 161.0
+margin_bottom = 305.0
 
 [node name="PanelContainer" type="PanelContainer" parent="VBoxContainer/HBoxContainer/DisasmPanel/PanelContainer/MarginContainer"]
 margin_right = 690.0
-margin_bottom = 154.0
+margin_bottom = 298.0
 size_flags_vertical = 4
 custom_styles/panel = SubResource( 4 )
 
@@ -301,7 +301,7 @@ custom_styles/panel = SubResource( 4 )
 margin_left = 1.0
 margin_top = 1.0
 margin_right = 689.0
-margin_bottom = 153.0
+margin_bottom = 297.0
 size_flags_vertical = 4
 custom_constants/margin_right = 8
 custom_constants/margin_top = 8
@@ -312,23 +312,23 @@ custom_constants/margin_bottom = 8
 margin_left = 8.0
 margin_top = 8.0
 margin_right = 680.0
-margin_bottom = 144.0
+margin_bottom = 288.0
 script = ExtResource( 9 )
-LinesDisplayed = 6
+LinesDisplayed = 12
 
 [node name="DisasmDisabledLabel" type="Label" parent="VBoxContainer/HBoxContainer/DisasmPanel/PanelContainer/MarginContainer/PanelContainer/MarginContainer"]
 visible = false
 margin_left = 8.0
-margin_top = 68.0
+margin_top = 140.0
 margin_right = 680.0
-margin_bottom = 84.0
+margin_bottom = 156.0
 text = "Disassembly Disabled While Running"
 align = 1
 valign = 1
 script = ExtResource( 10 )
 
 [node name="MemoryPanel" type="MarginContainer" parent="VBoxContainer"]
-margin_top = 184.0
+margin_top = 328.0
 margin_right = 1280.0
 margin_bottom = 960.0
 size_flags_vertical = 3
@@ -338,9 +338,9 @@ custom_constants/margin_bottom = 8
 
 [node name="DisasmDisabledLabel" type="Label" parent="VBoxContainer/MemoryPanel"]
 margin_left = 8.0
-margin_top = 376.0
+margin_top = 304.0
 margin_right = 1272.0
-margin_bottom = 392.0
+margin_bottom = 320.0
 text = "Disassembly Disabled While Running"
 
 [node name="PanelContainer" type="PanelContainer" parent="VBoxContainer/MemoryPanel"]
