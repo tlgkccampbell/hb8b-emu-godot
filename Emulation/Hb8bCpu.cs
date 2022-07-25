@@ -670,8 +670,7 @@ namespace Hb8b.Emulation
                                     break;
 
                                 StackPop(out _status);
-                                Bitwise.ClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.B);
-                                Bitwise.ClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.U);
+                                Bitwise.ClrMask(ref _status, (Byte)(Hb8bCpuStatusFlags.B | Hb8bCpuStatusFlags.U));
                             }
                             break;
 
@@ -3824,7 +3823,7 @@ namespace Hb8b.Emulation
         private void StackPop(out Byte value)
         {
             _stkp++;
-            value = Bus.Read((Byte)(0x0100 + _stkp));
+            value = Bus.Read((UInt16)(0x0100 + _stkp));
         }
 
         /// <summary>
