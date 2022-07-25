@@ -61,6 +61,12 @@ namespace Hb8b.Emulation
 
             while (remainingClockCycles > 0)
             {
+                if ((_pc == 0x3133) && !stepped)
+                {
+                    IsSuspended = true;
+                    break;
+                }
+
                 _truncationAddr = _pc;
                 _truncationOpenBus = Bus.OpenBusValue;
 
@@ -115,8 +121,8 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 6, out instrCycles))
                                     break;
 
-                                var addrIdx = Bus.Read16ZeroPage((Byte)(Bus.Read(_pc++) + _x));
-                                var addrAbs = Bus.Read16(addrIdx);
+                                var addrIdx = Bus.Read(_pc++);
+                                var addrAbs = (UInt16)(Bus.Read16ZeroPage((Byte)(addrIdx + _x)));
 
                                 var data = Bus.Read(addrAbs);
                                 _acc = (Byte)(_acc | data);
@@ -219,7 +225,7 @@ namespace Hb8b.Emulation
                                 var data = Bus.Read(_pc++);
                                 _acc = (Byte)(_acc | data);
 
-                                SetStatusCZN(_acc);
+                                SetStatusZN(_acc);
                             }
                             break;
 
@@ -342,8 +348,8 @@ namespace Hb8b.Emulation
 
                         case 0x11: // ORA, IZY
                             {
-                                var addrIdx = (UInt16)(Bus.Read16ZeroPage((Byte)(Bus.Read(_pc++))) + _y);
-                                var addrAbs = Bus.Read16(addrIdx);
+                                var addrIdx = Bus.Read(_pc++);
+                                var addrAbs = (UInt16)(Bus.Read16ZeroPage(addrIdx) + _y);
 
                                 var extraCycles = (addrAbs & 0xFF00) != (addrIdx & 0xFF00) ? 1U : 0U;
 
@@ -362,8 +368,8 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 5, out instrCycles))
                                     break;
 
-                                var addrIdx = Bus.Read16ZeroPage(Bus.Read(_pc++));
-                                var addrAbs = Bus.Read16(addrIdx);
+                                var addrIdx = Bus.Read(_pc++);
+                                var addrAbs = Bus.Read16ZeroPage(addrIdx);
 
                                 var data = Bus.Read(addrAbs);
                                 _acc = (Byte)(_acc | data);
@@ -568,7 +574,7 @@ namespace Hb8b.Emulation
                                 var addrAbs = Bus.Read16(_pc);
                                 _pc += 2;
 
-                                StackPush(_pc - 1);
+                                StackPush16(_pc - 1);
                                 _pc = addrAbs;
                             }
                             break;
@@ -578,8 +584,8 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 6, out instrCycles))
                                     break;
 
-                                var addrIdx = Bus.Read16ZeroPage((Byte)(Bus.Read(_pc++) + _x));
-                                var addrAbs = Bus.Read16(addrIdx);
+                                var addrIdx = Bus.Read(_pc++);
+                                var addrAbs = (UInt16)(Bus.Read16ZeroPage((Byte)(addrIdx + _x)));
 
                                 var data = Bus.Read(addrAbs);
                                 _acc = (Byte)(_acc & data);
@@ -614,8 +620,7 @@ namespace Hb8b.Emulation
                                 var result = (Byte)(_acc & data);
 
                                 SetStatusZ(result);
-                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.N, (data & (1 << 7)) != 0);
-                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.V, (data & (1 << 6)) == 0);
+                                _status = (Byte)((_status & 0b00111111) | (data & 0b11000000));
                             }
                             break;
 
@@ -642,11 +647,12 @@ namespace Hb8b.Emulation
 
                                 var data = Bus.Read(addrZp);
                                 var carry = (UInt16)(Bitwise.IsSetMask(ref _status, (Byte)Hb8bCpuStatusFlags.C) ? 1 : 0);
-                                var result = (UInt16)((data << 1) | carry);
+                                var result = (Byte)((data << 1) | carry);
 
-                                SetStatusCZN(result);
+                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.C, (data & 0x80) != 0);
+                                SetStatusZN(result);
 
-                                Bus.Write(addrZp, (Byte)result);
+                                Bus.Write(addrZp, result);
                             }
                             break;
 
@@ -669,8 +675,12 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 2, out instrCycles))
                                     break;
 
-                                StackPop(out _status);
-                                Bitwise.ClrMask(ref _status, (Byte)(Hb8bCpuStatusFlags.B | Hb8bCpuStatusFlags.U));
+                                StackPop(out var newStatus);
+
+                                var oldStatus = _status;
+                                oldStatus &= 0b00110000;
+                                newStatus &= 0b11001111;
+                                _status = (Byte)(oldStatus | newStatus);
                             }
                             break;
 
@@ -693,11 +703,12 @@ namespace Hb8b.Emulation
 
                                 var data = _acc;
                                 var carry = (UInt16)(Bitwise.IsSetMask(ref _status, (Byte)Hb8bCpuStatusFlags.C) ? 1 : 0);
-                                var result = (UInt16)((data << 1) | carry);
+                                var result = (Byte)((data << 1) | carry);
 
-                                SetStatusCZN(result);
+                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.C, (data & 0x80) != 0);
+                                SetStatusZN(result);
 
-                                Bus.Write(_acc, (Byte)result);
+                                _acc = result;
                             }
                             break;
 
@@ -719,8 +730,7 @@ namespace Hb8b.Emulation
                                 var result = (Byte)(_acc & data);
 
                                 SetStatusZ(result);
-                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.N, (data & (1 << 7)) != 0);
-                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.V, (data & (1 << 6)) == 0);
+                                _status = (Byte)((_status & 0b00111111) | (data & 0b11000000));
                             }
                             break;
 
@@ -750,11 +760,12 @@ namespace Hb8b.Emulation
 
                                 var data = Bus.Read(addrAbs);
                                 var carry = (UInt16)(Bitwise.IsSetMask(ref _status, (Byte)Hb8bCpuStatusFlags.C) ? 1 : 0);
-                                var result = (UInt16)((data << 1) | carry);
+                                var result = (Byte)((data << 1) | carry);
 
-                                SetStatusCZN(result);
+                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.C, (data & 0x80) != 0);
+                                SetStatusZN(result);
 
-                                Bus.Write(addrAbs, (Byte)result);
+                                Bus.Write(addrAbs, result);
                             }
                             break;
 
@@ -807,8 +818,8 @@ namespace Hb8b.Emulation
 
                         case 0x31: // AND, IZY
                             {
-                                var addrIdx = (UInt16)(Bus.Read16ZeroPage((Byte)(Bus.Read(_pc++))) + _y);
-                                var addrAbs = Bus.Read16(addrIdx);
+                                var addrIdx = Bus.Read(_pc++);
+                                var addrAbs = (UInt16)(Bus.Read16ZeroPage(addrIdx) + _y);
 
                                 var extraCycles = (addrAbs & 0xFF00) != (addrIdx & 0xFF00) ? 1U : 0U;
 
@@ -827,8 +838,8 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 5, out instrCycles))
                                     break;
 
-                                var addrIdx = Bus.Read16ZeroPage(Bus.Read(_pc++));
-                                var addrAbs = Bus.Read16(addrIdx);
+                                var addrIdx = Bus.Read(_pc++);
+                                var addrAbs = Bus.Read16ZeroPage(addrIdx);
 
                                 var data = Bus.Read(addrAbs);
                                 _acc = (Byte)(_acc & data);
@@ -854,8 +865,7 @@ namespace Hb8b.Emulation
                                 var result = (Byte)(_acc & data);
 
                                 SetStatusZ(result);
-                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.N, (data & (1 << 7)) != 0);
-                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.V, (data & (1 << 6)) == 0);
+                                _status = (Byte)((_status & 0b00111111) | (data & 0b11000000));
                             }
                             break;
 
@@ -882,11 +892,12 @@ namespace Hb8b.Emulation
 
                                 var data = Bus.Read(addrZp);
                                 var carry = (UInt16)(Bitwise.IsSetMask(ref _status, (Byte)Hb8bCpuStatusFlags.C) ? 1 : 0);
-                                var result = (UInt16)((data << 1) | carry);
+                                var result = (Byte)((data << 1) | carry);
 
-                                SetStatusCZN(result);
+                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.C, (data & 0x80) != 0);
+                                SetStatusZN(result);
 
-                                Bus.Write(addrZp, (Byte)result);
+                                Bus.Write(addrZp, result);
                             }
                             break;
 
@@ -963,6 +974,7 @@ namespace Hb8b.Emulation
                                 var result = (Byte)(_acc & data);
 
                                 SetStatusZ(result);
+                                _status = (Byte)((_status & 0b00111111) | (data & 0b11000000));
                             }
                             break;
 
@@ -997,11 +1009,12 @@ namespace Hb8b.Emulation
 
                                 var data = Bus.Read(addrAbsOffset);
                                 var carry = (UInt16)(Bitwise.IsSetMask(ref _status, (Byte)Hb8bCpuStatusFlags.C) ? 1 : 0);
-                                var result = (UInt16)((data << 1) | carry);
+                                var result = (Byte)((data << 1) | carry);
 
-                                SetStatusCZN(result);
+                                Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.C, (data & 0x80) != 0);
+                                SetStatusZN(result);
 
-                                Bus.Write(addrAbsOffset, (Byte)result);
+                                Bus.Write(addrAbsOffset, result);
                             }
                             break;
 
@@ -1030,8 +1043,12 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 6, out instrCycles))
                                     break;
 
-                                StackPop(out _status);
-                                Bitwise.ClrMask(ref _status, (Byte)(Hb8bCpuStatusFlags.B | Hb8bCpuStatusFlags.I));
+                                StackPop(out var newStatus);
+                                
+                                var oldStatus = _status;
+                                oldStatus &= 0b00110000;
+                                newStatus &= 0b11001111;
+                                _status = (Byte)(oldStatus | newStatus);
 
                                 StackPop16(out _pc);
                             }
@@ -1042,8 +1059,8 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 6, out instrCycles))
                                     break;
 
-                                var addrIdx = Bus.Read16ZeroPage((Byte)(Bus.Read(_pc++) + _x));
-                                var addrAbs = Bus.Read16(addrIdx);
+                                var addrIdx = Bus.Read(_pc++);
+                                var addrAbs = (UInt16)(Bus.Read16ZeroPage((Byte)(addrIdx + _x)));
 
                                 var data = Bus.Read(addrAbs);
                                 _acc = (Byte)(_acc ^ data);
@@ -1151,7 +1168,7 @@ namespace Hb8b.Emulation
                                 var result = (Byte)(data >> 1);
 
                                 Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.C, (data & 0x01) == 1);
-                                SetStatusZN(_acc);
+                                SetStatusZN(result);
 
                                 _acc = result;
                             }
@@ -1256,8 +1273,8 @@ namespace Hb8b.Emulation
 
                         case 0x51: // EOR, IZY
                             {
-                                var addrIdx = (UInt16)(Bus.Read16ZeroPage((Byte)(Bus.Read(_pc++))) + _y);
-                                var addrAbs = Bus.Read16(addrIdx);
+                                var addrIdx = Bus.Read(_pc++);
+                                var addrAbs = (UInt16)(Bus.Read16ZeroPage(addrIdx) + _y);
 
                                 var extraCycles = (addrAbs & 0xFF00) != (addrIdx & 0xFF00) ? 1U : 0U;
 
@@ -1276,8 +1293,8 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 5, out instrCycles))
                                     break;
 
-                                var addrIdx = Bus.Read16ZeroPage(Bus.Read(_pc++));
-                                var addrAbs = Bus.Read16(addrIdx);
+                                var addrIdx = Bus.Read(_pc++);
+                                var addrAbs = Bus.Read16ZeroPage(addrIdx);
 
                                 var data = Bus.Read(addrAbs);
                                 _acc = (Byte)(_acc ^ data);
@@ -1467,8 +1484,8 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 6, out instrCycles))
                                     break;
 
-                                var addrIdx = Bus.Read16ZeroPage((Byte)(Bus.Read(_pc++) + _x));
-                                var addrAbs = Bus.Read16(addrIdx);
+                                var addrIdx = Bus.Read(_pc++);
+                                var addrAbs = (UInt16)(Bus.Read16ZeroPage((Byte)(addrIdx + _x)));
 
                                 var m = _acc;
                                 var n = Bus.Read(addrAbs);
@@ -1611,7 +1628,7 @@ namespace Hb8b.Emulation
                                     break;
 
                                 var addrInd = Bus.Read16(_pc);
-                                var addrAbs = Bus.Read(addrInd);
+                                var addrAbs = Bus.Read16(addrInd);
 
                                 _pc = addrAbs;
                             }
@@ -1703,8 +1720,8 @@ namespace Hb8b.Emulation
 
                         case 0x71: // ADC, IZY
                             {
-                                var addrIdx = (UInt16)(Bus.Read16ZeroPage((Byte)(Bus.Read(_pc++))) + _y);
-                                var addrAbs = Bus.Read16(addrIdx);
+                                var addrIdx = Bus.Read(_pc++);
+                                var addrAbs = (UInt16)(Bus.Read16ZeroPage(addrIdx) + _y);
 
                                 var extraCycles = (addrAbs & 0xFF00) != (addrIdx & 0xFF00) ? 1U : 0U;
 
@@ -1726,8 +1743,8 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 5, out instrCycles))
                                     break;
 
-                                var addrIdx = Bus.Read16ZeroPage(Bus.Read(_pc++));
-                                var addrAbs = Bus.Read16(addrIdx);
+                                var addrIdx = Bus.Read(_pc++);
+                                var addrAbs = Bus.Read16ZeroPage(addrIdx);
 
                                 var m = _acc;
                                 var n = Bus.Read(addrAbs);
@@ -1957,8 +1974,8 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 6, out instrCycles))
                                     break;
 
-                                var addrIdx = Bus.Read16ZeroPage((Byte)(Bus.Read(_pc++) + _x));
-                                var addrAbs = Bus.Read16(addrIdx);
+                                var addrIdx = Bus.Read(_pc++);
+                                var addrAbs = (UInt16)(Bus.Read16ZeroPage((Byte)(addrIdx + _x)));
 
                                 Bus.Write(addrAbs, _acc);
                             }
@@ -2046,6 +2063,7 @@ namespace Hb8b.Emulation
                                 var result = (Byte)(_acc & data);
 
                                 SetStatusZ(result);
+                                _status = (Byte)((_status & 0b00111111) | (data & 0b11000000));
                             }
                             break;
 
@@ -2151,8 +2169,8 @@ namespace Hb8b.Emulation
 
                         case 0x91: // STA, IZY
                             {
-                                var addrIdx = (UInt16)(Bus.Read16ZeroPage((Byte)(Bus.Read(_pc++))) + _y);
-                                var addrAbs = Bus.Read16(addrIdx);
+                                var addrIdx = Bus.Read(_pc++);
+                                var addrAbs = (UInt16)(Bus.Read16ZeroPage(addrIdx) + _y);
 
                                 var extraCycles = (addrAbs & 0xFF00) != (addrIdx & 0xFF00) ? 1U : 0U;
 
@@ -2168,8 +2186,8 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 5, out instrCycles))
                                     break;
 
-                                var addrIdx = Bus.Read16ZeroPage(Bus.Read(_pc++));
-                                var addrAbs = Bus.Read16(addrIdx);
+                                var addrIdx = Bus.Read(_pc++);
+                                var addrAbs = Bus.Read16ZeroPage(addrIdx);
 
                                 Bus.Write(addrAbs, _acc);
                             }
@@ -2181,18 +2199,18 @@ namespace Hb8b.Emulation
                             }
                             break;
 
-                        case 0x94: // STY (ZPX)
+                        case 0x94: // STY, ZPX
                             {
                                 if (CheckTruncatedInstruction(remainingClockCycles, 4, out instrCycles))
                                     break;
 
                                 var addrZp = (Byte)(Bus.Read(_pc++) + _x);
 
-                                Bus.Write(addrZp, (Byte)0x00);
+                                Bus.Write(addrZp, _y);
                             }
                             break;
 
-                        case 0x95: // STA (ZPX)
+                        case 0x95: // STA, ZPX
                             {
                                 if (CheckTruncatedInstruction(remainingClockCycles, 4, out instrCycles))
                                     break;
@@ -2203,7 +2221,7 @@ namespace Hb8b.Emulation
                             }
                             break;
 
-                        case 0x96: // STX (ZPY)
+                        case 0x96: // STX, ZPY
                             {
                                 if (CheckTruncatedInstruction(remainingClockCycles, 4, out instrCycles))
                                     break;
@@ -2347,8 +2365,8 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 6, out instrCycles))
                                     break;
 
-                                var addrIdx = Bus.Read16ZeroPage((Byte)(Bus.Read(_pc++) + _x));
-                                var addrAbs = Bus.Read16(addrIdx);
+                                var addrIdx = Bus.Read(_pc++);
+                                var addrAbs = (UInt16)(Bus.Read16ZeroPage((Byte)(addrIdx + _x)));
 
                                 _acc = Bus.Read(addrAbs);
 
@@ -2556,8 +2574,8 @@ namespace Hb8b.Emulation
 
                         case 0xB1: // LDA, IZY
                             {
-                                var addrIdx = (UInt16)(Bus.Read16ZeroPage((Byte)(Bus.Read(_pc++))) + _y);
-                                var addrAbs = Bus.Read16(addrIdx);
+                                var addrIdx = Bus.Read(_pc++);
+                                var addrAbs = (UInt16)(Bus.Read16ZeroPage(addrIdx) + _y);
 
                                 var extraCycles = (addrAbs & 0xFF00) != (addrIdx & 0xFF00) ? 1U : 0U;
 
@@ -2575,8 +2593,8 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 5, out instrCycles))
                                     break;
 
-                                var addrIdx = Bus.Read16ZeroPage(Bus.Read(_pc++));
-                                var addrAbs = Bus.Read16(addrIdx);
+                                var addrIdx = Bus.Read(_pc++);
+                                var addrAbs = Bus.Read16ZeroPage(addrIdx);
 
                                 _acc = Bus.Read(addrAbs);
 
@@ -2675,6 +2693,8 @@ namespace Hb8b.Emulation
                                     break;
 
                                 _x = _stkp;
+
+                                SetStatusZN(_x);
                             }
                             break;
 
@@ -2729,9 +2749,9 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 4U + extraCycles, out instrCycles))
                                     break;
 
-                                _y = Bus.Read(addrAbsOffset);
+                                _x = Bus.Read(addrAbsOffset);
 
-                                SetStatusZN(_y);
+                                SetStatusZN(_x);
                             }
                             break;
 
@@ -2773,8 +2793,8 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 6, out instrCycles))
                                     break;
 
-                                var addrIdx = Bus.Read16ZeroPage((Byte)(Bus.Read(_pc++) + _x));
-                                var addrAbs = Bus.Read16(addrIdx);
+                                var addrIdx = Bus.Read(_pc++);
+                                var addrAbs = (UInt16)(Bus.Read16ZeroPage((Byte)(addrIdx + _x)));
 
                                 var data = Bus.Read(addrAbs);
                                 var result = (UInt16)(_acc - data);
@@ -3000,8 +3020,8 @@ namespace Hb8b.Emulation
 
                         case 0xD1: // CMP, IZY
                             {
-                                var addrIdx = (UInt16)(Bus.Read16ZeroPage((Byte)(Bus.Read(_pc++))) + _y);
-                                var addrAbs = Bus.Read16(addrIdx);
+                                var addrIdx = Bus.Read(_pc++);
+                                var addrAbs = (UInt16)(Bus.Read16ZeroPage(addrIdx) + _y);
 
                                 var extraCycles = (addrAbs & 0xFF00) != (addrIdx & 0xFF00) ? 1U : 0U;
 
@@ -3021,8 +3041,8 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 5, out instrCycles))
                                     break;
 
-                                var addrIdx = Bus.Read16ZeroPage(Bus.Read(_pc++));
-                                var addrAbs = Bus.Read16(addrIdx);
+                                var addrIdx = Bus.Read(_pc++);
+                                var addrAbs = Bus.Read16ZeroPage(addrIdx);
 
                                 var data = Bus.Read(addrAbs);
                                 var result = (UInt16)(_acc - data);
@@ -3223,8 +3243,8 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 6, out instrCycles))
                                     break;
 
-                                var addrIdx = Bus.Read16ZeroPage((Byte)(Bus.Read(_pc++) + _x));
-                                var addrAbs = Bus.Read16(addrIdx);
+                                var addrIdx = Bus.Read(_pc++);
+                                var addrAbs = (UInt16)(Bus.Read16ZeroPage((Byte)(addrIdx + _x)));
 
                                 var m = _acc;
                                 var n = (Byte)~Bus.Read(addrAbs);
@@ -3385,6 +3405,23 @@ namespace Hb8b.Emulation
                             }
                             break;
 
+                        case 0xEE: // INC, ABS
+                            {
+                                if (CheckTruncatedInstruction(remainingClockCycles, 6, out instrCycles))
+                                    break;
+
+                                var addrAbs = Bus.Read16(_pc);
+                                _pc += 2;
+
+                                var data = Bus.Read(addrAbs);
+                                data++;
+
+                                SetStatusZN(data);
+
+                                Bus.Write(addrAbs, data);
+                            }
+                            break;
+
                         case 0xEF: // BBS6, ZPREL
                             {
                                 if (CheckTruncatedInstruction(remainingClockCycles, 5, out instrCycles))
@@ -3434,8 +3471,8 @@ namespace Hb8b.Emulation
 
                         case 0xF1: // SBC, IZY
                             {
-                                var addrIdx = (UInt16)(Bus.Read16ZeroPage((Byte)(Bus.Read(_pc++))) + _y);
-                                var addrAbs = Bus.Read16(addrIdx);
+                                var addrIdx = Bus.Read(_pc++);
+                                var addrAbs = (UInt16)(Bus.Read16ZeroPage(addrIdx) + _y);
 
                                 var extraCycles = (addrAbs & 0xFF00) != (addrIdx & 0xFF00) ? 1U : 0U;
 
@@ -3457,8 +3494,8 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 5, out instrCycles))
                                     break;
 
-                                var addrIdx = Bus.Read16ZeroPage(Bus.Read(_pc++));
-                                var addrAbs = Bus.Read16(addrIdx);
+                                var addrIdx = Bus.Read(_pc++);
+                                var addrAbs = Bus.Read16ZeroPage(addrIdx);
 
                                 var m = _acc;
                                 var n = (Byte)~Bus.Read(addrAbs);
@@ -3665,7 +3702,7 @@ namespace Hb8b.Emulation
                 }
             }
 
-            return cycles;
+            return cycles - remainingClockCycles;
         }
 
         /// <summary>
@@ -3835,9 +3872,9 @@ namespace Hb8b.Emulation
         private void StackPop16(out UInt16 value)
         {
             _stkp++;
-            var valueLo = Bus.Read((Byte)(0x0100 + _stkp));            
+            var valueLo = Bus.Read((UInt16)(0x0100 + _stkp));            
             _stkp++;
-            var valueHi = Bus.Read((Byte)(0x0100 + _stkp));
+            var valueHi = Bus.Read((UInt16)(0x0100 + _stkp));
             value = (UInt16)((valueHi << 8) | valueLo);
         }
 
