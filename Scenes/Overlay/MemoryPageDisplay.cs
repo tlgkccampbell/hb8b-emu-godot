@@ -31,9 +31,10 @@ public class MemoryPageDisplay : Control
 	public override void _Draw()
 	{
 		var font = _font!;
+        var fontAscent = font.GetAscent();
 
-		var address = (UInt16)(256 * _page);
-		var position = new Vector2(0, font.GetAscent());
+        var address = (UInt16)(256 * _page);
+		var position = new Vector2(0, fontAscent);
 		for (var y = 0; y < RowsPerPage; y++)
 		{
 			DrawString(_font, position, $"${address:X4}:");
@@ -41,8 +42,27 @@ public class MemoryPageDisplay : Control
 
 			for (var x = 0; x < ItemsPerRow; x++)
 			{
-				var value = _emulatedDevice?.Bus.Read((UInt16)address) ?? 0;
-				DrawString(_font, position, $"${value:X2}");
+                if (_emulatedDevice == null)
+                {
+					// Draw all $00 in the editor.
+                    var value = 0;
+                    DrawString(_font, position, $"${value:X2}");
+                }
+                else
+                {
+                    const Int32 ValueBoundsPadding = 2;
+                    var valueBounds = new Rect2(position.x - ValueBoundsPadding, position.y - (fontAscent + ValueBoundsPadding),
+						_hexPairWidth + (ValueBoundsPadding * 2), _fontHeight + (ValueBoundsPadding * 2));
+
+                    // Highlight the program counter address.
+                    if (address == _emulatedDevice.Bus.Cpu.ProgramCounter)
+                        DrawRect(valueBounds, Colors.Cornflower);
+
+                    // Draw the memory value.
+                    var value = _emulatedDevice.Bus.Read(address);
+					DrawString(_font, position, $"${value:X2}");
+                }
+
 				position.x += _hexPairWidth + _elementSpacing;
 				address++;
 			}
