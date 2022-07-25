@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=2]
+[gd_scene load_steps=17 format=2]
 
 [ext_resource path="res://Scenes/Overlay/FPSLabel.cs" type="Script" id=1]
 [ext_resource path="res://Scenes/Overlay/Overlay.cs" type="Script" id=2]
@@ -11,6 +11,7 @@
 [ext_resource path="res://Scenes/Overlay/DisasmView.cs" type="Script" id=9]
 [ext_resource path="res://Scenes/Overlay/DisasmDisabledLabel.cs" type="Script" id=10]
 [ext_resource path="res://Scenes/Overlay/StatusBitLabel.cs" type="Script" id=11]
+[ext_resource path="res://Scenes/Overlay/GotoDialog.cs" type="Script" id=12]
 
 [sub_resource type="DynamicFont" id=1]
 font_data = ExtResource( 4 )
@@ -451,6 +452,66 @@ filters = PoolStringArray( "*.bin; Binary files" )
 current_dir = "/Repositories/hb8b-emu-godot"
 current_path = "/Repositories/hb8b-emu-godot/"
 
+[node name="GotoDialog" type="WindowDialog" parent="."]
+visible = true
+margin_right = 303.0
+margin_bottom = 82.0
+focus_next = NodePath("MarginContainer/VBoxContainer/CenterContainer/HBoxContainer/GotoAddressLineEdit")
+window_title = "Go to Address"
+script = ExtResource( 12 )
+
+[node name="MarginContainer" type="MarginContainer" parent="GotoDialog"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+custom_constants/margin_right = 8
+custom_constants/margin_top = 8
+custom_constants/margin_left = 8
+custom_constants/margin_bottom = 8
+
+[node name="VBoxContainer" type="VBoxContainer" parent="GotoDialog/MarginContainer"]
+margin_left = 8.0
+margin_top = 8.0
+margin_right = 295.0
+margin_bottom = 74.0
+
+[node name="CenterContainer" type="CenterContainer" parent="GotoDialog/MarginContainer/VBoxContainer"]
+margin_right = 287.0
+margin_bottom = 36.0
+size_flags_vertical = 3
+
+[node name="HBoxContainer" type="HBoxContainer" parent="GotoDialog/MarginContainer/VBoxContainer/CenterContainer"]
+margin_left = 32.0
+margin_top = 5.0
+margin_right = 254.0
+margin_bottom = 31.0
+
+[node name="GotoAddressLabel" type="Label" parent="GotoDialog/MarginContainer/VBoxContainer/CenterContainer/HBoxContainer"]
+margin_top = 5.0
+margin_right = 16.0
+margin_bottom = 21.0
+text = "$"
+
+[node name="GotoAddressLineEdit" type="LineEdit" parent="GotoDialog/MarginContainer/VBoxContainer/CenterContainer/HBoxContainer"]
+margin_left = 20.0
+margin_right = 222.0
+margin_bottom = 26.0
+max_length = 4
+
+[node name="GoButton" type="Button" parent="GotoDialog/MarginContainer/VBoxContainer"]
+margin_left = 212.0
+margin_top = 40.0
+margin_right = 287.0
+margin_bottom = 66.0
+rect_min_size = Vector2( 75, 26 )
+size_flags_horizontal = 8
+size_flags_vertical = 8
+text = "Go"
+
 [connection signal="value_changed" from="VBoxContainer/MemoryPanel/PanelContainer/MarginContainer/MemoryPageViewer/MemoryPageSelector/CenterContainer/HBoxContainer/SpinBox" to="VBoxContainer/MemoryPanel/PanelContainer/MarginContainer/MemoryPageViewer/CenterContainer/MarginContainer/PanelContainer/MarginContainer/MemoryPageDisplay" method="_on_SpinBox_value_changed"]
 [connection signal="pressed" from="VBoxContainer/MemoryPanel/PanelContainer/MarginContainer/MemoryPageViewer/RomLoadButton" to="VBoxContainer/MemoryPanel/PanelContainer/MarginContainer/MemoryPageViewer" method="_on_RomLoadButton_pressed"]
 [connection signal="file_selected" from="VBoxContainer/MemoryPanel/PanelContainer/MarginContainer/MemoryPageViewer/RomFileDialog" to="VBoxContainer/MemoryPanel/PanelContainer/MarginContainer/MemoryPageViewer" method="_on_RomFileDialog_file_selected"]
+[connection signal="Confirmed" from="GotoDialog" to="." method="_on_GotoDialog_Confirmed"]
+[connection signal="about_to_show" from="GotoDialog" to="GotoDialog" method="_on_GotoDialog_about_to_show"]
+[connection signal="text_changed" from="GotoDialog/MarginContainer/VBoxContainer/CenterContainer/HBoxContainer/GotoAddressLineEdit" to="GotoDialog" method="_on_GotoAddressLineEdit_text_changed"]
+[connection signal="text_entered" from="GotoDialog/MarginContainer/VBoxContainer/CenterContainer/HBoxContainer/GotoAddressLineEdit" to="GotoDialog" method="_on_GotoAddressLineEdit_text_entered"]
+[connection signal="pressed" from="GotoDialog/MarginContainer/VBoxContainer/GoButton" to="GotoDialog" method="_on_GoButton_pressed"]

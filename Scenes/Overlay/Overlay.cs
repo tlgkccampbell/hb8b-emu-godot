@@ -4,10 +4,12 @@ using System;
 public class Overlay : Control
 {
     private EmulatedDevice? _emulatedDevice;
+    private GotoDialog? _gotoDialog;
 
     public override void _Ready()
     {
         _emulatedDevice = GetNode<EmulatedDevice>("/root/EmulatedDevice");
+        _gotoDialog = GetNode<GotoDialog>("GotoDialog");
     }
 
     public override void _Input(InputEvent @event)
@@ -28,6 +30,12 @@ public class Overlay : Control
 
             if (emulatedDevice.Bus.Cpu.IsSuspended)
             {
+                if (@event.IsActionPressed("open_goto") && !_gotoDialog!.Visible)
+                {
+                    GetTree().SetInputAsHandled();
+                    _gotoDialog.PopupCentered();                    
+                }
+
                 if (@event.IsActionPressed("emu_step_cycle"))
                 {
                     emulatedDevice.Bus.SingleStepCycle();
@@ -39,5 +47,10 @@ public class Overlay : Control
                 }
             }
         }
+    }
+
+    public void _on_GotoDialog_Confirmed(UInt16 address)
+    {
+        _emulatedDevice!.Bus.Cpu.ProgramCounter = address;
     }
 }
