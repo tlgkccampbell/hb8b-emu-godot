@@ -101,7 +101,7 @@ void light() {
 
 }
 "
-graph_offset = Vector2( 0, 334.5 )
+graph_offset = Vector2( 0, 375 )
 mode = 1
 flags/light_only = false
 nodes/fragment/0/position = Vector2( 1380, 360 )
@@ -171,6 +171,7 @@ tile_set = ExtResource( 5 )
 cell_size = Vector2( 8, 16 )
 cell_custom_transform = Transform2D( 0, 0, 0, 0, 0, 0 )
 format = 1
+tile_data = PoolIntArray( 3407915, 0, 2, 3407916, 0, 2, 3407917, 0, 2, 3407918, 0, 2, 3407919, 0, 2, 3407920, 0, 2, 3407922, 0, 2, 3407923, 0, 2, 3473448, 0, 2, 3473449, 0, 2, 3473450, 0, 2, 3473451, 0, 2, 3473452, 0, 2, 3473453, 0, 2, 3473455, 0, 2, 3473456, 0, 2, 3473457, 0, 2, 3473458, 0, 2, 3473459, 0, 2, 3473460, 0, 2, 3473461, 0, 2, 3473462, 0, 2, 3538983, 0, 2, 3538984, 0, 2 )
 
 [node name="Rastermask" type="Viewport" parent="."]
 size = Vector2( 640, 480 )
@@ -189,6 +190,9 @@ script = ExtResource( 1 )
 material = SubResource( 3 )
 anchor_right = 1.0
 anchor_bottom = 1.0
+margin_right = -640.0
+margin_bottom = -480.0
+rect_scale = Vector2( 2, 2 )
 
 [node name="OverlayCanvas" type="CanvasLayer" parent="."]
 

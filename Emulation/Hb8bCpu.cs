@@ -3443,6 +3443,7 @@ namespace Hb8b.Emulation
         private void ClockPeripheralsUntilInterrupt(ref UInt32 remainingClockCycles)
         {
             // TODO
+            remainingClockCycles = 0;
         }
 
         /// <summary>

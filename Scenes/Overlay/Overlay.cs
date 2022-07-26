@@ -21,30 +21,27 @@ public class Overlay : Control
             this.Visible = !this.Visible;
         }
 
-        if (Visible)
+        if (@event.IsActionPressed("emu_toggle_suspended"))
         {
-            if (@event.IsActionPressed("emu_toggle_suspended"))
+            emulatedDevice.Bus.Cpu.IsSuspended = !emulatedDevice.Bus.Cpu.IsSuspended;
+        }
+
+        if (emulatedDevice.Bus.Cpu.IsSuspended)
+        {
+            if (@event.IsActionPressed("open_goto") && !_gotoDialog!.Visible)
             {
-                emulatedDevice.Bus.Cpu.IsSuspended = !emulatedDevice.Bus.Cpu.IsSuspended;
+                GetTree().SetInputAsHandled();
+                _gotoDialog.PopupCentered();                    
             }
 
-            if (emulatedDevice.Bus.Cpu.IsSuspended)
+            if (@event.IsActionPressed("emu_step_cycle"))
             {
-                if (@event.IsActionPressed("open_goto") && !_gotoDialog!.Visible)
-                {
-                    GetTree().SetInputAsHandled();
-                    _gotoDialog.PopupCentered();                    
-                }
+                emulatedDevice.Bus.SingleStepCycle();
+            }
 
-                if (@event.IsActionPressed("emu_step_cycle"))
-                {
-                    emulatedDevice.Bus.SingleStepCycle();
-                }
-
-                if (@event.IsActionPressed("emu_step_instruction"))
-                {
-                    emulatedDevice.Bus.SingleStepInstruction();
-                }
+            if (@event.IsActionPressed("emu_step_instruction"))
+            {
+                emulatedDevice.Bus.SingleStepInstruction();
             }
         }
     }
