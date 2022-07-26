@@ -258,7 +258,7 @@ namespace Hb8b.Emulation
                 case 0xE4: return ZP0("CPX");
                 case 0xE5: return ZP0("SBC");
                 case 0xE6: return ZP0("INC");
-                case 0xE7: return ZPREL("SMB6");
+                case 0xE7: return ZP0("SMB6");
                 case 0xE8: return IMP("INX");
                 case 0xE9: return IMM("SBC");
                 case 0xEA: return NOP();
@@ -273,7 +273,7 @@ namespace Hb8b.Emulation
                 case 0xF4: return UND(2);
                 case 0xF5: return ZPX("SBC");
                 case 0xF6: return ZPX("INC");
-                case 0xF7: return ZPREL("SMB7");
+                case 0xF7: return ZP0("SMB7");
                 case 0xF8: return IMP("SED");
                 case 0xF9: return ABY("SEC");
                 case 0xFA: return IMP("PLX");
