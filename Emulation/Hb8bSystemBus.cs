@@ -27,7 +27,7 @@ namespace Hb8b.Emulation
             this.SystemRom.Memory[0xE000 - SystemRom.Offset] = 0x4C;
             this.SystemRom.Memory[0xE001 - SystemRom.Offset] = 0x00;
             this.SystemRom.Memory[0xE002 - SystemRom.Offset] = 0xE0;
-            this.Video = new Hb8bVideoCircuit(this);
+            this.Video = new Hb8bVideoCircuit(this, 0x4000);
             this.Disassembler = new Disassembler(this);
             this.Reset();            
         }
@@ -131,6 +131,10 @@ namespace Hb8b.Emulation
                     OpenBusValue = SystemRam.Memory[address];
                     break;
 
+                case 2:
+                    OpenBusValue = Video.Memory[address - Video.Offset];
+                    break;
+
                 case 7:
                     OpenBusValue = SystemRom.Memory[address - SystemRom.Offset];
                     break;
@@ -194,6 +198,10 @@ namespace Hb8b.Emulation
                     Array.Copy(SystemRam.Memory, address, buffer, 0, 256);
                     break;
 
+                case 2:
+                    Array.Copy(Video.Memory, address - Video.Offset, buffer, 0, 256);
+                    break;
+
                 case 7:
                     Array.Copy(SystemRom.Memory, address - SystemRom.Offset, buffer, 0, 256);
                     break;
@@ -218,9 +226,13 @@ namespace Hb8b.Emulation
                 case 0:
                     SystemRam.Memory[address] = value;
                     break;
-                    
+
+                case 2:
+                    Video.Memory[address - Video.Offset] = value;
+                    break;
+
                 case 7:
-                    SystemRom.Memory[address] = value;
+                    SystemRom.Memory[address - SystemRom.Offset] = value;
                     break;
             }
         }

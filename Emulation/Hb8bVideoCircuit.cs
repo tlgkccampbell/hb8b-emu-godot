@@ -11,8 +11,9 @@ namespace Hb8b.Emulation
         /// Initializes a new instance of the <see cref="Hb8bVideoCircuit" class.
         /// </summary>
         /// <param name="bus">The system bus to which the video circuit is attached.</param>
-        public Hb8bVideoCircuit(Hb8bSystemBus bus)
-            : base(bus, 0x2000, 0x2000)
+        /// <param name="offset">The video circuit's offset within the system's memory map.</param>
+        public Hb8bVideoCircuit(Hb8bSystemBus bus, UInt16 offset)
+            : base(bus, offset, 0x2000)
         { }
     }
 }
