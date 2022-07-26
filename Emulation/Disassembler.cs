@@ -265,6 +265,7 @@ namespace Hb8b.Emulation
                 case 0xEB: return UND(1);
                 case 0xEC: return ABS("CPX");
                 case 0xED: return ABS("SBC");
+                case 0xEE: return ABS("INC");
                 case 0xEF: return ZPREL("BBS6");
                 case 0xF0: return REL("BEQ");
                 case 0xF1: return IZY("SBC");

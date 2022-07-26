@@ -12,7 +12,8 @@ public class MemoryPageDisplay : Control
 	private Font? _font;
 	private Int32 _fontHeight;
 	private Int32 _elementSpacing;
-	private Int32 _hexAddrWidth;
+    private Int32 _lineSpacing;
+    private Int32 _hexAddrWidth;
 	private Int32 _hexPairWidth;
 	private Int32 _page = 0;
 
@@ -24,8 +25,9 @@ public class MemoryPageDisplay : Control
 		_font = GetFont("font");
 		_fontHeight = (Int32)Math.Ceiling(_font.GetHeight());
 		_elementSpacing = (Int32)Math.Ceiling(_font.GetStringSize(" ").x);
-		_hexPairWidth = (Int32)Math.Ceiling(_font.GetStringSize("$FF").x);
-		_hexAddrWidth = (Int32)Math.Ceiling(_font.GetStringSize("$FFFF:").x);
+        _lineSpacing = _elementSpacing / 2;
+		_hexAddrWidth = (Int32)Math.Ceiling(_font.GetStringSize("$FFFF").x);
+        _hexPairWidth = (Int32)Math.Ceiling(_font.GetStringSize("$FF").x);
 	}
 
 	public override void _Draw()
@@ -33,11 +35,22 @@ public class MemoryPageDisplay : Control
 		var font = _font!;
         var fontAscent = font.GetAscent();
 
+		// Draw hex offsets at the top row.
+        var position = new Vector2(_hexAddrWidth + _elementSpacing, fontAscent);
+        for (var i = 0; i < 16; i++)
+        {
+            DrawString(_font, position, $"${i:X2}", Colors.Yellow);
+            position.x += _hexPairWidth + _elementSpacing;
+        }
+
+        position.x = 0;
+        position.y += _fontHeight + _lineSpacing;
+
+        // Draw the memory table.
         var address = (UInt16)(256 * _page);
-		var position = new Vector2(0, fontAscent);
 		for (var y = 0; y < RowsPerPage; y++)
 		{
-			DrawString(_font, position, $"${address:X4}:");
+			DrawString(_font, position, $"${address:X4}", Colors.Yellow);
 			position.x += _hexAddrWidth + _elementSpacing;
 
 			for (var x = 0; x < ItemsPerRow; x++)
@@ -68,8 +81,8 @@ public class MemoryPageDisplay : Control
 			}
 
 			position.x = 0;
-			position.y = position.y + _fontHeight + (_elementSpacing / 2);
-		}
+            position.y = position.y + _fontHeight + _lineSpacing;
+        }
 	}
 
     public override void _Process(float delta)
@@ -80,8 +93,9 @@ public class MemoryPageDisplay : Control
 
     public override Vector2 _GetMinimumSize()
 	{
-		var w = _hexAddrWidth + (ItemsPerRow * (_hexPairWidth + _elementSpacing));
-		var h = (RowsPerPage * _fontHeight) + ((RowsPerPage - 1) * (_elementSpacing / 2));
+        var rows = RowsPerPage + 1;
+        var w = _hexAddrWidth + (ItemsPerRow * (_hexPairWidth + _elementSpacing));
+		var h = (rows * _fontHeight) + ((rows - 1) * (_elementSpacing / 2));
 		return new Vector2(w, h);
 	}
 

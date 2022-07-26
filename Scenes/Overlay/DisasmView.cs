@@ -12,6 +12,7 @@ public class DisasmView : Control
 	private Int32 _longestMnemonicWidth;
     private Int32 _longestArgumentWidth;
 	private Int32 _hexAddrWidth;
+	private Int32 _hexPairWidth;
     private Int32 _linesDisplayed;
 
     [Export(PropertyHint.Range, "1,100")]
@@ -35,8 +36,9 @@ public class DisasmView : Control
 		_elementSpacing = (Int32)Math.Ceiling(_font.GetStringSize(" ").x);
         _lineSpacing = _elementSpacing / 2;
         _longestMnemonicWidth = (Int32)Math.Ceiling(_font.GetStringSize("XXXX").x);
-        _longestArgumentWidth = (Int32)Math.Ceiling(_font.GetStringSize("XXXXXXXXXXXXXXXXXXXXXXXX").x);
-		_hexAddrWidth = (Int32)Math.Ceiling(_font.GetStringSize("$FFFF:").x);
+        _longestArgumentWidth = (Int32)Math.Ceiling(_font.GetStringSize("XXXXXXXXXXXXXXXXXXXX").x);
+		_hexAddrWidth = (Int32)Math.Ceiling(_font.GetStringSize("$FFFF").x);
+        _hexPairWidth = (Int32)Math.Ceiling(_font.GetStringSize("$FF").x);
     }
 
     public override void _Draw()
@@ -53,22 +55,46 @@ public class DisasmView : Control
  
         for (var i = 0; i < LinesDisplayed; i++)
         {
-            var disasmAddr = disasm?.Address ?? 0;
-            var disasmText = disasm?.Disassemble() ?? "LDA $FF";
-            DrawString(_font, position, $"${disasmAddr:X4}: {disasmText}", (i == 0) ? Colors.Yellow : (Color?)null);
+            // Disassemble the instruction.
+            var addrPrev = disasm?.Address ?? 0;
+            var disasmInstrText = disasm?.Disassemble() ?? "LDA $FF";
+            var addrNext = disasm?.Address ?? 0;
+            var disasmInstrByteCount = addrNext - addrPrev;
+
+            // Draw address
+            DrawString(_font, position, $"${addrPrev:X4}", Colors.Yellow);
+            position.x += _hexAddrWidth + _elementSpacing;
+
+            // Draw bytes
+            var disasmBytePosition = position;
+            var disasmBytesColor = (i == 0) ? Colors.DarkCyan : Colors.DimGray;
+            for (var b = 0; b < 4 && b < disasmInstrByteCount; b++)
+            {
+                var instrByteAddr = (UInt16)(addrPrev + b);
+                var instrByte = _emulatedDevice?.Bus.Read(instrByteAddr) ?? 0;
+                DrawString(_font, disasmBytePosition, $"${instrByte:X2}", disasmBytesColor);
+                disasmBytePosition.x += _hexPairWidth + _elementSpacing;
+            }
+            position.x += (_hexPairWidth * 4) + (_elementSpacing * 4);
+
+            // Draw instruction
+            var textColor = (i == 0) ? Colors.Cyan : Colors.White;
+            DrawString(_font, position, disasmInstrText, textColor);
+
+            position.x = 0;
             position.y += _fontHeight + _lineSpacing;
         }
     }
 
     public override void _Process(float delta)
     {
-        if (!Engine.EditorHint)
+        if (!Engine.EditorHint && _emulatedDevice!.Bus.Cpu.IsSuspended)
             Update();
     }
     
     public override Vector2 _GetMinimumSize()
 	{
-        var w = _hexAddrWidth + _longestMnemonicWidth + _longestArgumentWidth + (_elementSpacing * 2);
+        var w = _hexAddrWidth + (_hexPairWidth * 4) + _longestMnemonicWidth + _longestArgumentWidth + (_elementSpacing * 5);
         var h = (_fontHeight * LinesDisplayed) + (_lineSpacing * (LinesDisplayed - 1));
         return new Vector2(w, h);
 	}

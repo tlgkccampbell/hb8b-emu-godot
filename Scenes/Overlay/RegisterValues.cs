@@ -4,11 +4,12 @@ using System;
 public class RegisterValues : VBoxContainer
 {
     private EmulatedDevice? _emulatedDevice;
+    private Label? _pcValueLabel;
     private Label? _aValueLabel;
     private Label? _xValueLabel;
     private Label? _yValueLabel;
     private Label? _stkpValueLabel;
-    private Label? _pcValueLabel;
+    private Label? _statusValueLabel;
 
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
@@ -19,15 +20,17 @@ public class RegisterValues : VBoxContainer
         _yValueLabel = GetNode<Label>("YRegisterValue");
         _stkpValueLabel = GetNode<Label>("StackPointerValue");
         _pcValueLabel = GetNode<Label>("ProgramCounterValue");
+        _statusValueLabel = GetNode<Label>("StatusRegisterValue");
     }
 
     // Called every frame. 'delta' is the elapsed time since the previous frame.
     public override void _Process(float delta)
     {
+        _pcValueLabel!.Text = $"${_emulatedDevice!.Bus.Cpu.ProgramCounter:X4}";
         _aValueLabel!.Text = $"${_emulatedDevice!.Bus.Cpu.Accumulator:X2}";
         _xValueLabel!.Text = $"${_emulatedDevice!.Bus.Cpu.XRegister:X2}";
         _yValueLabel!.Text = $"${_emulatedDevice!.Bus.Cpu.YRegister:X2}";
         _stkpValueLabel!.Text = $"${_emulatedDevice!.Bus.Cpu.StackPointer:X2}";
-        _pcValueLabel!.Text = $"${_emulatedDevice!.Bus.Cpu.ProgramCounter:X4}";
+        _statusValueLabel!.Text = $"${_emulatedDevice!.Bus.Cpu.StatusRegister:X2}";
     }
 }

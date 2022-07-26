@@ -7,6 +7,7 @@ public class EmulatedDevice : Node
     public override void _Ready()
     {
         Bus.Reset();
+        Bus.Cpu.IsSuspended = true;
     }
 
     public Hb8b.Emulation.Hb8bSystemBus Bus { get; } = new Hb8b.Emulation.Hb8bSystemBus();

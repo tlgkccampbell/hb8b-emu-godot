@@ -27,6 +27,5 @@ public class MemoryPageViewer : VBoxContainer
 
         device.Bus.Reset();
         device.Bus.Cpu.IsSuspended = true;
-        device.Bus.Cpu.ProgramCounter = 0x400;
     }
 }
