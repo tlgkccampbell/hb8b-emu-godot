@@ -3057,13 +3057,33 @@ namespace Hb8b.Emulation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ADC(Byte operand)
         {
-            var m = _acc;
-            var n = operand;
-            var r = (UInt16)(m + n + (_status & 0x1));
-            _acc = (Byte)r;
+            var a = (uint)_acc;
+            var b = (uint)operand;
 
-            SetStatusV(m, n, _acc);
-            SetStatusCZN(r);            
+            if (a == 0 && b == 0)
+                Console.WriteLine();
+
+            var carry = Bitwise.IsSetMask(ref _status, (Byte)Hb8bCpuStatusFlags.C) ? 1U : 0U;
+            var temp = a + b + carry;
+
+            var bcd = Bitwise.IsSetMask(ref _status, (Byte)Hb8bCpuStatusFlags.D);
+            if (bcd)
+            {
+                temp = (a & 0x0f) + (b & 0x0f) + carry;
+                if (temp >= 10)
+                    temp = (temp - 10) | 0x10;
+
+                temp += (a & 0xf0) + (b & 0xf0);
+                if (temp > 0x9f)
+                    temp += 0x60;
+            }
+
+            Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.C, temp > 0xFF);
+            Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.V, ((a ^ temp) & (b ^ temp) & 0x80) != 0);
+
+            _acc = (Byte)(temp & 0xFF);
+
+            SetStatusZN(_acc);
         }
 
         /// <summary>
@@ -3292,13 +3312,37 @@ namespace Hb8b.Emulation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void SBC(Byte operand)
         {
-            var m = _acc;
-            var n = (Byte)~operand;
-            var r = (UInt16)(m + n + (_status & 0x1));
-            _acc = (Byte)r;
-            
-            SetStatusV(m, n, _acc);
-            SetStatusCZN(r);
+            var a = (uint)_acc;
+            var b = (uint)operand;
+
+            var carry = Bitwise.IsSetMask(ref _status, (Byte)Hb8bCpuStatusFlags.C) ? 1U : 0U;
+            var temp = a - b - 1U + carry;
+            Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.V, ((a ^ temp) & (a ^ b) & 0x80) != 0);
+
+            var bcd = Bitwise.IsSetMask(ref _status, (Byte)Hb8bCpuStatusFlags.D);
+            if (bcd)
+            {
+                var lo = (a & 0x0f) - (b & 0x0f) - 1 + carry;
+                var hi = (a >> 4) - (b >> 4);
+
+                if ((lo & 0x10) != 0)
+                {
+                    lo -= 6;
+                    hi--;
+                }
+
+                if ((hi & 0x10) != 0)
+                    hi -= 6;
+
+                _acc = (Byte)((hi << 4) | (lo & 0x0f));
+            }
+            else
+            {
+                _acc = (Byte)(temp & 0xFF);
+            }
+
+            Bitwise.SetOrClrMask(ref _status, (Byte)Hb8bCpuStatusFlags.C, temp < 0x100);
+            SetStatusZN(_acc);
         }
 
         /// <summary>
