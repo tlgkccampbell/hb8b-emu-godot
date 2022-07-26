@@ -1564,8 +1564,10 @@ namespace Hb8b.Emulation
                                 if (CheckTruncatedInstruction(remainingClockCycles, 2, out instrCycles))
                                     break;
 
+                                // When the BIT instruction is used with the immediate addressing mode, the n and v flags are unaffected.
                                 var data = Bus.Read(_pc++);
-                                BIT(data);
+                                var result = (Byte)(_acc & data);
+                                SetStatusZ(result);
                             }
                             break;
 
@@ -2532,6 +2534,8 @@ namespace Hb8b.Emulation
                                 var addr = ZP0();
                                 var data = Bus.Read(addr);
                                 Bitwise.Set(ref data, 6);
+
+                                Bus.Write(addr, data);
                             }
                             break;
 
