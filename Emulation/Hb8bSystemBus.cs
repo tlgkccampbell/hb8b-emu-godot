@@ -20,8 +20,8 @@ namespace Hb8b.Emulation
         public Hb8bSystemBus()
         {
             this.Cpu = new Hb8bCpu(this);
-            this.SystemRam = new Hb8bSystemMemory(this, 0x0000, 0x8000);
-            this.SystemRom = new Hb8bSystemMemory(this, 0x8000, 0x8000, fill: 0xEA);
+            this.SystemRam = new Hb8bSystemMemory(this, 0x0000, 0x2000);
+            this.SystemRom = new Hb8bSystemMemory(this, 0xE000, 0x2000, fill: 0xEA);
             this.SystemRom.Memory[0xFFFC - SystemRom.Offset] = 0x00;
             this.SystemRom.Memory[0xFFFD - SystemRom.Offset] = 0xE0;
             this.SystemRom.Memory[0xE000 - SystemRom.Offset] = 0x4C;
@@ -128,15 +128,9 @@ namespace Hb8b.Emulation
             switch (device)
             {
                 case 0:
-                case 1:
-                case 2:
-                case 3:
                     OpenBusValue = SystemRam.Memory[address];
                     break;
 
-                case 4:
-                case 5:
-                case 6:
                 case 7:
                     OpenBusValue = SystemRom.Memory[address - SystemRom.Offset];
                     break;
@@ -197,15 +191,9 @@ namespace Hb8b.Emulation
             switch (device)
             {
                 case 0:
-                case 1:
-                case 2:
-                case 3:
                     Array.Copy(SystemRam.Memory, address, buffer, 0, 256);
                     break;
 
-                case 4:
-                case 5:
-                case 6:
                 case 7:
                     Array.Copy(SystemRom.Memory, address - SystemRom.Offset, buffer, 0, 256);
                     break;
@@ -228,15 +216,9 @@ namespace Hb8b.Emulation
             switch (device)
             {
                 case 0:
-                case 1:
-                case 2:
-                case 3:
                     SystemRam.Memory[address] = value;
                     break;
                     
-                case 4:
-                case 5:
-                case 6:
                 case 7:
                     SystemRom.Memory[address] = value;
                     break;
