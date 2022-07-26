@@ -2470,7 +2470,7 @@ namespace Hb8b.Emulation
 
                                 var addr = IZX();
                                 var data = Bus.Read(addr);
-                                ADC((Byte)~data);
+                                SBC(data);
                             }
                             break;
 
@@ -2507,7 +2507,7 @@ namespace Hb8b.Emulation
 
                                 var addr = ZP0();
                                 var data = Bus.Read(addr);
-                                ADC((Byte)~data);
+                                SBC(data);
                             }
                             break;
 
@@ -2550,7 +2550,7 @@ namespace Hb8b.Emulation
                                     break;
 
                                 var data = Bus.Read(_pc++);
-                                ADC((Byte)~data);
+                                SBC(data);
                             }
                             break;
 
@@ -2587,7 +2587,7 @@ namespace Hb8b.Emulation
 
                                 var addr = ABS();
                                 var data = Bus.Read(addr);
-                                ADC((Byte)~data);
+                                SBC(data);
                             }
                             break;
 
@@ -2632,7 +2632,7 @@ namespace Hb8b.Emulation
                                     break;
 
                                 var data = Bus.Read(addr);
-                                ADC((Byte)~data);
+                                SBC(data);
                             }
                             break;
 
@@ -2643,7 +2643,7 @@ namespace Hb8b.Emulation
 
                                 var addr = IZP();
                                 var data = Bus.Read(addr);
-                                ADC((Byte)~data);
+                                SBC(data);
                             }
                             break;
 
@@ -2669,7 +2669,7 @@ namespace Hb8b.Emulation
 
                                 var addr = ZPX();
                                 var data = Bus.Read(addr);
-                                ADC((Byte)~data);
+                                SBC(data);
                             }
                             break;
 
@@ -2716,7 +2716,7 @@ namespace Hb8b.Emulation
                                     break;
 
                                 var data = Bus.Read(addr);
-                                ADC((Byte)~data);
+                                SBC(data);
                             }
                             break;
 
@@ -2753,7 +2753,7 @@ namespace Hb8b.Emulation
                                     break;
 
                                 var data = Bus.Read(addr);
-                                ADC((Byte)~data);
+                                SBC(data);
                             }
                             break;
 
@@ -3051,27 +3051,19 @@ namespace Hb8b.Emulation
         }
 
         /// <summary>
-        /// Implements the ADC (ADd with Carry) and SBC (SuBtract with Carry) instructions.
+        /// Implements the ADC (ADd with Carry) instruction.
         /// </summary>
         /// <param name="operand">The instruction's operand.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ADC(Byte operand)
         {
-            var bcd = Bitwise.IsSetMask(ref _status, (Byte)Hb8bCpuStatusFlags.D);
-            if (bcd)
-            {
-                throw new NotImplementedException();
-            }
-            else
-            {
-                var m = _acc;
-                var n = operand;
-                var r = (UInt16)(m + n + (_status & 0x1));
-                _acc = (Byte)r;
+            var m = _acc;
+            var n = operand;
+            var r = (UInt16)(m + n + (_status & 0x1));
+            _acc = (Byte)r;
 
-                SetStatusV(m, n, _acc);
-                SetStatusCZN(r);
-            }
+            SetStatusV(m, n, _acc);
+            SetStatusCZN(r);            
         }
 
         /// <summary>
@@ -3292,7 +3284,23 @@ namespace Hb8b.Emulation
             SetStatusZN(result);
             return result;
         }
-        
+
+        /// <summary>
+        /// Implements the SBC (SuBtract with Carry) instruction.
+        /// </summary>
+        /// <param name="operand">The instruction's operand.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void SBC(Byte operand)
+        {
+            var m = _acc;
+            var n = (Byte)~operand;
+            var r = (UInt16)(m + n + (_status & 0x1));
+            _acc = (Byte)r;
+            
+            SetStatusV(m, n, _acc);
+            SetStatusCZN(r);
+        }
+
         /// <summary>
         /// Implements the TRB (Test and Reset Bits) instruction.
         /// </summary>
