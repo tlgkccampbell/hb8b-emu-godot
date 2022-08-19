@@ -162,8 +162,9 @@ namespace Hb8b.Emulation
         /// Reads a single byte at the specified address.
         /// </summary>
         /// <param name="address">The address from which to read a value.</param>
+        /// <param name="peek">A value indicating whether the read should avoid modifying peripheral state.</param>
         /// <returns>The byte that was read from the specified address.</returns>
-        public Byte Read(UInt16 address)
+        public Byte Read(UInt16 address, Boolean peek = false)
         {
             var device = GetDeviceNumber(address);
             switch (device)
@@ -174,11 +175,11 @@ namespace Hb8b.Emulation
                         switch (GetRegisterDeviceNumber(address))
                         {
                             case 0:
-                                OpenBusValue = Via0.Read((Byte)(address & 0xF));
+                                OpenBusValue = Via0.Read((Byte)(address & 0xF), peek);
                                 break;
 
                             case 1:
-                                OpenBusValue = Via1.Read((Byte)(address & 0xF));
+                                OpenBusValue = Via1.Read((Byte)(address & 0xF), peek);
                                 break;
                         }
                     }
@@ -249,7 +250,8 @@ namespace Hb8b.Emulation
         /// </summary>
         /// <param name="page">The index of the page to read.</param>
         /// <param name="buffer">The buffer to populate with data from the page.</param>
-        public void ReadMemoryPage(Byte page, Byte[] buffer)
+        /// <param name="peek">A value indicating whether the read should avoid modifying peripheral state.</param>
+        public void ReadMemoryPage(Byte page, Byte[] buffer, Boolean peek = false)
         {
             var address = (UInt16)(page * 256);
             var device = GetDeviceNumber(address);
@@ -257,7 +259,7 @@ namespace Hb8b.Emulation
             {
                 case 0:
                     for (var i = 0; i < buffer.Length; i++)
-                        buffer[i] = Read((UInt16)(address + i));
+                        buffer[i] = Read((UInt16)(address + i), peek);
                     break;
 
                 case 1:

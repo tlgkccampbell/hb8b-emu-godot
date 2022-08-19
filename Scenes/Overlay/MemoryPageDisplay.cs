@@ -72,7 +72,7 @@ public class MemoryPageDisplay : Control
                         DrawRect(valueBounds, Colors.Cornflower);
 
                     // Draw the memory value.
-                    var value = _emulatedDevice.Bus.Read(address);
+                    var value = _emulatedDevice.Bus.Read(address, peek: true);
 					DrawString(_font, position, $"${value:X2}");
                 }
 

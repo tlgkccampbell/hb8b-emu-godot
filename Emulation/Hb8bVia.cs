@@ -39,15 +39,19 @@ namespace Hb8b.Emulation
         /// Reads from one of the VIA's registers.
         /// </summary>
         /// <param name="register">The index of the register to read. This value wraps around to 0 if it exceeds 15.</param>
+        /// <param name="peek">A value indicating whether the read should avoid modifying peripheral state.</param>
         /// <returns>The value read from the specified register.</returns>
-        public Byte Read(Byte register)
+        public Byte Read(Byte register, Boolean peek = false)
         {
             switch ((Hb8bViaRegister)(register & 0b1111))
             {
                 case Hb8bViaRegister.T1CL:
                     // 8 bits from T1 low-order counter transferred to MPU. T1 interrupt
                     // flag IFR6 is reset.
-                    ClrInterrupt(Hb8bViaInterrupt.Timer1);
+                    if (!peek)
+                    {
+                        ClrInterrupt(Hb8bViaInterrupt.Timer1);
+                    }
                     return (Byte)_timer1Counter;
 
                 case Hb8bViaRegister.T1CH:
@@ -66,7 +70,10 @@ namespace Hb8b.Emulation
 
                 case Hb8bViaRegister.T2CL:
                     // 8 bits from T2 low-order counter transferred to MPU. IFR5 is reset.
-                    ClrInterrupt(Hb8bViaInterrupt.Timer2);
+                    if (!peek)
+                    {
+                        ClrInterrupt(Hb8bViaInterrupt.Timer2);
+                    }
                     return (Byte)_timer2Counter;
 
                 case Hb8bViaRegister.T2CH:
@@ -89,7 +96,7 @@ namespace Hb8b.Emulation
                     return 0xFF;
             }
         }
-
+        
         /// <summary>
         /// Writes to one of the VIA's registers.
         /// </summary>
