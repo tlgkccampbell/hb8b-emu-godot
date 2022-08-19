@@ -17,6 +17,10 @@ run/main_scene="res://Scenes/Emulator/Emulator.tscn"
 
 EmulatedDevice="*res://Scenes/EmulatedDevice/EmulatedDevice.tscn"
 
+[debug]
+
+settings/fps/force_fps=60
+
 [display]
 
 window/size/width=1280

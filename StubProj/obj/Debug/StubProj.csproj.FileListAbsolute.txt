@@ -1,0 +1,12 @@
+D:\Repositories\StubProj\bin\Debug\StubProj.dll
+D:\Repositories\StubProj\bin\Debug\StubProj.pdb
+D:\Repositories\StubProj\obj\Debug\StubProj.csproj.AssemblyReference.cache
+D:\Repositories\StubProj\obj\Debug\StubProj.csproj.CoreCompileInputs.cache
+D:\Repositories\StubProj\obj\Debug\StubProj.dll
+D:\Repositories\StubProj\obj\Debug\StubProj.pdb
+D:\Repositories\hb8b-emu-godot\StubProj\bin\Debug\StubProj.dll
+D:\Repositories\hb8b-emu-godot\StubProj\bin\Debug\StubProj.pdb
+D:\Repositories\hb8b-emu-godot\StubProj\obj\Debug\StubProj.csproj.AssemblyReference.cache
+D:\Repositories\hb8b-emu-godot\StubProj\obj\Debug\StubProj.csproj.CoreCompileInputs.cache
+D:\Repositories\hb8b-emu-godot\StubProj\obj\Debug\StubProj.dll
+D:\Repositories\hb8b-emu-godot\StubProj\obj\Debug\StubProj.pdb

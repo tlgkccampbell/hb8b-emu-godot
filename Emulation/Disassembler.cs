@@ -284,8 +284,6 @@ namespace Hb8b.Emulation
                 case 0xFE: return ABX("INC");
                 case 0xFF: return ZPREL("BBS7");
             }
-
-            return $"{M("???")} (${opcode:X2})";
         }
 
         /// <summary>

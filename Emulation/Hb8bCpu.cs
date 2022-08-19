@@ -68,6 +68,7 @@ namespace Hb8b.Emulation
                 {
                     var intCycles = HandleInterrupt(0xFFFA, ref remainingClockCycles);
                     IsWaitingForInterrupt = false;
+                    Bus.ClearNmi();
 
                     if (singleStepInstruction)
                         return intCycles;
@@ -2788,7 +2789,7 @@ namespace Hb8b.Emulation
                             throw new NotImplementedException(String.Format("Opcode not yet implemented: ${0:x2}", instrOpcode));
                     }
 
-                    ClockPeripherals(instrCycles);
+                    Bus.ClockPeripherals(instrCycles);
                     remainingClockCycles -= instrCycles;
 
                     if (singleStepInstruction)
@@ -2796,7 +2797,8 @@ namespace Hb8b.Emulation
                 }
                 else
                 {
-                    ClockPeripheralsUntilInterrupt(ref remainingClockCycles);
+                    var clockedCycles = Bus.ClockPeripheralsUntilInterrupt(remainingClockCycles);
+                    remainingClockCycles -= clockedCycles;
                 }
             }
 
@@ -3424,26 +3426,6 @@ namespace Hb8b.Emulation
 
             remainingClockCycles -= irqCycles;
             return irqCycles;
-        }
-
-        /// <summary>
-        /// Clocks the other peripherals alongside instruction execution.
-        /// </summary>
-        /// <param name="clockCycles">The number of cycles that were allocated to instructions.</param>
-        private void ClockPeripherals(UInt32 clockCycles)
-        {
-            // TODO
-        }
-
-        /// <summary>
-        /// Clocks the other peripherals until an interrupt is raised or the specified number of
-        /// clock cycles has elapsed.
-        /// </summary>
-        /// <param name="remainingClockCycles">The number of remaining clock cycles that are available for execution.</param>
-        private void ClockPeripheralsUntilInterrupt(ref UInt32 remainingClockCycles)
-        {
-            // TODO
-            remainingClockCycles = 0;
         }
 
         /// <summary>

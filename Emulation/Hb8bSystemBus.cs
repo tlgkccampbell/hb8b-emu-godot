@@ -20,13 +20,15 @@ namespace Hb8b.Emulation
         public Hb8bSystemBus()
         {
             this.Cpu = new Hb8bCpu(this);
-            this.SystemRam = new Hb8bSystemMemory(this, 0x0000, 0x2000);
-            this.SystemRom = new Hb8bSystemMemory(this, 0xE000, 0x2000, fill: 0xEA);
+            this.SystemRam = new Hb8bSystemMemory(this, 0x0000, 0x4000);
+            this.SystemRom = new Hb8bSystemMemory(this, 0xC000, 0x4000, fill: 0xEA);
             this.SystemRom.Memory[0xFFFC - SystemRom.Offset] = 0x00;
             this.SystemRom.Memory[0xFFFD - SystemRom.Offset] = 0xE0;
             this.SystemRom.Memory[0xE000 - SystemRom.Offset] = 0x4C;
             this.SystemRom.Memory[0xE001 - SystemRom.Offset] = 0x00;
             this.SystemRom.Memory[0xE002 - SystemRom.Offset] = 0xE0;
+            this.Via0 = new Hb8bVia(this);
+            this.Via1 = new Hb8bVia(this);
             this.Video = new Hb8bVideoCircuit(this, 0x4000);
             this.Disassembler = new Disassembler(this);
             this.Reset();            
@@ -94,6 +96,45 @@ namespace Hb8b.Emulation
         }
 
         /// <summary>
+        /// Clocks the bus' (non-CPU) peripherals by the specified number of cycles.
+        /// </summary>
+        /// <param name="cycles">The maximum number of cycles to clock.</param>
+        /// <returns>The number of cycles that were clocked.</returns>
+        public UInt32 ClockPeripherals(UInt32 cycles)
+        {
+            Video.Clock(cycles);
+            Via0.Clock(cycles);
+            Via1.Clock(cycles);
+
+            return cycles;
+        }
+
+        /// <summary>
+        /// Clocks the bus' (non-CPU) peripherals until an interrupt is raised.
+        /// </summary>
+        /// <param name="cycles">The maximum number of cycles to clock.</param>
+        /// <returns>The number of cycles that were clocked.</returns>
+        public UInt32 ClockPeripheralsUntilInterrupt(UInt32 cycles)
+        {
+            var reqCyclesVideo = Video.GetCyclesUntilNextInterrupt(cycles);
+            var reqCyclesVia0 = Via0.GetCyclesUntilNextInterrupt(cycles);
+            var reqCyclesVia1 = Via1.GetCyclesUntilNextInterrupt(cycles);
+            var reqCycles = Math.Min(reqCyclesVideo, Math.Min(reqCyclesVia0, reqCyclesVia1));
+            if (reqCycles <= cycles)
+            {
+                Video.Clock(reqCycles);
+                Via0.Clock(reqCycles);
+                Via1.Clock(reqCycles);
+
+                return reqCycles;
+            }
+            else
+            {
+                return ClockPeripherals(cycles);
+            }
+        }
+
+        /// <summary>
         /// Advances the system clock until the next video frame is available.
         /// </summary>
         public void ClockUntilNextFrame()
@@ -128,6 +169,26 @@ namespace Hb8b.Emulation
             switch (device)
             {
                 case 0:
+                    if (IsRegisterSpace(address))
+                    {
+                        switch (GetRegisterDeviceNumber(address))
+                        {
+                            case 0:
+                                OpenBusValue = Via0.Read((Byte)(address & 0xF));
+                                break;
+
+                            case 1:
+                                OpenBusValue = Via1.Read((Byte)(address & 0xF));
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        OpenBusValue = SystemRam.Memory[address];
+                    }
+                    break;
+
+                case 1:
                     OpenBusValue = SystemRam.Memory[address];
                     break;
 
@@ -135,6 +196,7 @@ namespace Hb8b.Emulation
                     OpenBusValue = Video.Memory[address - Video.Offset];
                     break;
 
+                case 6:
                 case 7:
                     OpenBusValue = SystemRom.Memory[address - SystemRom.Offset];
                     break;
@@ -177,9 +239,8 @@ namespace Hb8b.Emulation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public UInt16 Read16ZeroPage(Byte address)
         {
-            var sram = SystemRam.Memory;
-            var addrLo = sram[(Byte)address];
-            var addrHi = sram[(Byte)(address + 1)];
+            var addrLo = Read((Byte)address);
+            var addrHi = Read((Byte)(address + 1));
             return (UInt16)((addrHi << 8) | addrLo);
         }
 
@@ -195,6 +256,11 @@ namespace Hb8b.Emulation
             switch (device)
             {
                 case 0:
+                    for (var i = 0; i < buffer.Length; i++)
+                        buffer[i] = Read((UInt16)(address + i));
+                    break;
+
+                case 1:
                     Array.Copy(SystemRam.Memory, address, buffer, 0, 256);
                     break;
 
@@ -202,6 +268,7 @@ namespace Hb8b.Emulation
                     Array.Copy(Video.Memory, address - Video.Offset, buffer, 0, 256);
                     break;
 
+                case 6:
                 case 7:
                     Array.Copy(SystemRom.Memory, address - SystemRom.Offset, buffer, 0, 256);
                     break;
@@ -224,6 +291,26 @@ namespace Hb8b.Emulation
             switch (device)
             {
                 case 0:
+                    if (IsRegisterSpace(address))
+                    {
+                        switch (GetRegisterDeviceNumber(address))
+                        {
+                            case 0:
+                                Via0.Write((Byte)(address & 0xF), value);
+                                break;
+
+                            case 1:
+                                Via1.Write((Byte)(address & 0xF), value);
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        SystemRam.Memory[address] = value;
+                    }
+                    break;
+
+                case 1:
                     SystemRam.Memory[address] = value;
                     break;
 
@@ -231,6 +318,7 @@ namespace Hb8b.Emulation
                     Video.Memory[address - Video.Offset] = value;
                     break;
 
+                case 6:
                 case 7:
                     SystemRom.Memory[address - SystemRom.Offset] = value;
                     break;
@@ -300,6 +388,16 @@ namespace Hb8b.Emulation
         public Hb8bSystemMemory SystemRom { get; }
 
         /// <summary>
+        /// Gets the first VIA chip.
+        /// </summary>
+        public Hb8bVia Via0 { get; }
+
+        /// <summary>
+        /// Gets the second VIA chip.
+        /// </summary>
+        public Hb8bVia Via1 { get; }
+
+        /// <summary>
         /// Gets the peripheral that represents the system's video generation circuit.
         /// </summary>
         public Hb8bVideoCircuit Video { get; }
@@ -335,6 +433,18 @@ namespace Hb8b.Emulation
         public UInt64 TotalClockCyclesExecuted => _clockCyclesTotal;
 
         /// <summary>
+        /// Gets a value indicating whether the specified address is in register space.
+        /// Note that this method DOES NOT check whether the address is in device block 0.
+        /// </summary>
+        /// <param name="address">The memory address to evaluate.</param>
+        /// <returns><see langword="true"/> if the specified memory address is in register space; otherwise, <see langword="false"/>.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static Boolean IsRegisterSpace(UInt16 address)
+        {
+            return (address & 0x380) == 0x80;
+        }
+
+        /// <summary>
         /// Gets the device number associated with the specified memory address.
         /// </summary>
         /// <param name="address">The memory address to evaluate.</param>
@@ -343,6 +453,17 @@ namespace Hb8b.Emulation
         private static Int32 GetDeviceNumber(UInt16 address)
         {
             return (address & 0xE000) >> 13;
+        }
+
+        /// <summary>
+        /// Gets the register device number associated with the specified memory address.
+        /// </summary>
+        /// <param name="address">The memory address to evaluate.</param>
+        /// <returns>The register device number associated with the specified memory address.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static Int32 GetRegisterDeviceNumber(UInt16 address)
+        {
+            return (address & 0x70) >> 4;
         }
     }
 }

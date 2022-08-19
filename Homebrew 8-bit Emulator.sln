@@ -1,12 +1,18 @@
-﻿Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Homebrew 8-bit Emulator", "Homebrew 8-bit Emulator.csproj", "{605BD6BB-57AC-4E46-8874-5E2C9722BA32}"
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32602.215
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Homebrew 8-bit Emulator", "Homebrew 8-bit Emulator.csproj", "{605BD6BB-57AC-4E46-8874-5E2C9722BA32}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StubProj", "StubProj\StubProj.csproj", "{B83A5A30-7D9A-4BCC-BB56-2974A2AAE767}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-	Debug|Any CPU = Debug|Any CPU
-	ExportDebug|Any CPU = ExportDebug|Any CPU
-	ExportRelease|Any CPU = ExportRelease|Any CPU
+		Debug|Any CPU = Debug|Any CPU
+		ExportDebug|Any CPU = ExportDebug|Any CPU
+		ExportRelease|Any CPU = ExportRelease|Any CPU
+		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{605BD6BB-57AC-4E46-8874-5E2C9722BA32}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -15,5 +21,21 @@ Global
 		{605BD6BB-57AC-4E46-8874-5E2C9722BA32}.ExportDebug|Any CPU.Build.0 = ExportDebug|Any CPU
 		{605BD6BB-57AC-4E46-8874-5E2C9722BA32}.ExportRelease|Any CPU.ActiveCfg = ExportRelease|Any CPU
 		{605BD6BB-57AC-4E46-8874-5E2C9722BA32}.ExportRelease|Any CPU.Build.0 = ExportRelease|Any CPU
+		{605BD6BB-57AC-4E46-8874-5E2C9722BA32}.Release|Any CPU.ActiveCfg = ExportRelease|Any CPU
+		{605BD6BB-57AC-4E46-8874-5E2C9722BA32}.Release|Any CPU.Build.0 = ExportRelease|Any CPU
+		{B83A5A30-7D9A-4BCC-BB56-2974A2AAE767}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B83A5A30-7D9A-4BCC-BB56-2974A2AAE767}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B83A5A30-7D9A-4BCC-BB56-2974A2AAE767}.ExportDebug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B83A5A30-7D9A-4BCC-BB56-2974A2AAE767}.ExportDebug|Any CPU.Build.0 = Debug|Any CPU
+		{B83A5A30-7D9A-4BCC-BB56-2974A2AAE767}.ExportRelease|Any CPU.ActiveCfg = Debug|Any CPU
+		{B83A5A30-7D9A-4BCC-BB56-2974A2AAE767}.ExportRelease|Any CPU.Build.0 = Debug|Any CPU
+		{B83A5A30-7D9A-4BCC-BB56-2974A2AAE767}.Release|Any CPU.ActiveCfg = Debug|Any CPU
+		{B83A5A30-7D9A-4BCC-BB56-2974A2AAE767}.Release|Any CPU.Build.0 = Debug|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E6493BE1-C407-4968-853B-2B96B7FC7A01}
 	EndGlobalSection
 EndGlobal
