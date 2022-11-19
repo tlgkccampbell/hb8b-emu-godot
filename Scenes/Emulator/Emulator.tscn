@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=2]
+[gd_scene load_steps=33 format=2]
 
 [ext_resource path="res://Scenes/Emulator/RastermaskSprite.cs" type="Script" id=1]
 [ext_resource path="res://Scenes/Emulator/EmulatorVideo.cs" type="Script" id=2]
@@ -7,9 +7,129 @@
 [ext_resource path="res://Scenes/Emulator/EmulatorTextTiles.tres" type="TileSet" id=5]
 [ext_resource path="res://Scenes/Emulator/EmulatorCore.cs" type="Script" id=6]
 [ext_resource path="res://Scenes/Emulator/EmulatorFramework.cs" type="Script" id=7]
+[ext_resource path="res://Scenes/Emulator/EmulatorColorTiles.tres" type="TileSet" id=8]
 
 [sub_resource type="ViewportTexture" id=15]
 viewport_path = NodePath("FramebufferNew")
+
+[sub_resource type="VisualShaderNodeTextureUniform" id=18]
+uniform_name = "TileMap"
+color_default = 1
+
+[sub_resource type="VisualShaderNodeTextureUniform" id=19]
+uniform_name = "ColorMapFg"
+
+[sub_resource type="VisualShaderNodeTextureUniform" id=20]
+uniform_name = "ColorMapBg"
+color_default = 1
+
+[sub_resource type="VisualShaderNodeSwitch" id=21]
+
+[sub_resource type="VisualShaderNodeCompare" id=22]
+default_input_values = [ 0, Vector3( 1, 1, 1 ), 1, Vector3( 1, 1, 1 ), 2, 1e-05 ]
+type = 1
+
+[sub_resource type="VisualShader" id=16]
+code = "shader_type canvas_item;
+uniform sampler2D TileMap : hint_black;
+uniform sampler2D ColorMapFg;
+uniform sampler2D ColorMapBg : hint_black;
+
+
+
+void vertex() {
+// Output:0
+
+}
+
+void fragment() {
+// TextureUniform:2
+	vec3 n_out2p0;
+	float n_out2p1;
+	{
+		vec4 n_tex_read = texture(TileMap, UV.xy);
+		n_out2p0 = n_tex_read.rgb;
+		n_out2p1 = n_tex_read.a;
+	}
+
+// Compare:6
+	vec3 n_in6p1 = vec3(1.00000, 1.00000, 1.00000);
+	bool n_out6p0;
+	{
+		bvec3 _bv = equal(n_out2p0, n_in6p1);
+		n_out6p0 = all(_bv);
+	}
+
+// TextureUniform:3
+	vec3 n_out3p0;
+	float n_out3p1;
+	{
+		vec4 n_tex_read = texture(ColorMapFg, UV.xy);
+		n_out3p0 = n_tex_read.rgb;
+		n_out3p1 = n_tex_read.a;
+	}
+
+// TextureUniform:4
+	vec3 n_out4p0;
+	float n_out4p1;
+	{
+		vec4 n_tex_read = texture(ColorMapBg, UV.xy);
+		n_out4p0 = n_tex_read.rgb;
+		n_out4p1 = n_tex_read.a;
+	}
+
+// VectorSwitch:5
+	vec3 n_out5p0;
+	if(n_out6p0)
+	{
+		n_out5p0 = n_out3p0;
+	}
+	else
+	{
+		n_out5p0 = n_out4p0;
+	}
+
+// Output:0
+	COLOR.rgb = n_out5p0;
+
+}
+
+void light() {
+// Output:0
+
+}
+"
+graph_offset = Vector2( 0, -120 )
+mode = 1
+flags/light_only = false
+nodes/fragment/0/position = Vector2( 1120, 200 )
+nodes/fragment/2/node = SubResource( 18 )
+nodes/fragment/2/position = Vector2( 380, -40 )
+nodes/fragment/3/node = SubResource( 19 )
+nodes/fragment/3/position = Vector2( 380, 180 )
+nodes/fragment/4/node = SubResource( 20 )
+nodes/fragment/4/position = Vector2( 380, 400 )
+nodes/fragment/5/node = SubResource( 21 )
+nodes/fragment/5/position = Vector2( 860, 200 )
+nodes/fragment/6/node = SubResource( 22 )
+nodes/fragment/6/position = Vector2( 620, -40 )
+nodes/fragment/connections = PoolIntArray( 2, 0, 6, 0, 6, 0, 5, 0, 3, 0, 5, 1, 4, 0, 5, 2, 5, 0, 0, 0 )
+
+[sub_resource type="ViewportTexture" id=23]
+viewport_path = NodePath("EmulatorFramework/EmulatorVideo/ColorMapBgViewport")
+
+[sub_resource type="ViewportTexture" id=24]
+viewport_path = NodePath("EmulatorFramework/EmulatorVideo/ColorMapFgViewport")
+
+[sub_resource type="ViewportTexture" id=25]
+viewport_path = NodePath("EmulatorFramework/EmulatorVideo/TileMapViewport")
+
+[sub_resource type="ShaderMaterial" id=17]
+resource_local_to_scene = true
+shader = SubResource( 16 )
+shader_param/TileMap = SubResource( 25 )
+shader_param/ColorMapFg = SubResource( 24 )
+shader_param/ColorMapBg = SubResource( 23 )
 
 [sub_resource type="ImageTexture" id=14]
 flags = 0
@@ -101,7 +221,7 @@ void light() {
 
 }
 "
-graph_offset = Vector2( 0, 375 )
+graph_offset = Vector2( 0, 87 )
 mode = 1
 flags/light_only = false
 nodes/fragment/0/position = Vector2( 1380, 360 )
@@ -151,27 +271,54 @@ margin_right = 40.0
 margin_bottom = 40.0
 texture = SubResource( 15 )
 
+[node name="EmulatorFramework" type="Node" parent="."]
+script = ExtResource( 7 )
+
+[node name="EmulatorCore" type="Node" parent="EmulatorFramework"]
+script = ExtResource( 6 )
+
+[node name="EmulatorVideo" type="Node" parent="EmulatorFramework"]
+script = ExtResource( 2 )
+
+[node name="TileMapViewport" type="Viewport" parent="EmulatorFramework/EmulatorVideo"]
+size = Vector2( 640, 480 )
+render_target_v_flip = true
+
+[node name="TileMap" type="TileMap" parent="EmulatorFramework/EmulatorVideo/TileMapViewport"]
+tile_set = ExtResource( 5 )
+cell_size = Vector2( 8, 16 )
+cell_custom_transform = Transform2D( 0, 0, 0, 0, 0, 0 )
+format = 1
+tile_data = PoolIntArray( 3407915, 0, 2, 3407916, 0, 2, 3407917, 0, 2, 3407918, 0, 2, 3407919, 0, 2, 3407920, 0, 2, 3407922, 0, 2, 3407923, 0, 2, 3473448, 0, 2, 3473449, 0, 2, 3473450, 0, 2, 3473451, 0, 2, 3473452, 0, 2, 3473453, 0, 2, 3473455, 0, 2, 3473456, 0, 2, 3473457, 0, 2, 3473458, 0, 2, 3473459, 0, 2, 3473460, 0, 2, 3473461, 0, 2, 3473462, 0, 2, 3538983, 0, 2, 3538984, 0, 2 )
+
+[node name="ColorMapBgViewport" type="Viewport" parent="EmulatorFramework/EmulatorVideo"]
+size = Vector2( 640, 480 )
+render_target_v_flip = true
+
+[node name="ColorMapBg" type="TileMap" parent="EmulatorFramework/EmulatorVideo/ColorMapBgViewport"]
+tile_set = ExtResource( 8 )
+cell_size = Vector2( 8, 16 )
+format = 1
+
+[node name="ColorMapFgViewport" type="Viewport" parent="EmulatorFramework/EmulatorVideo"]
+size = Vector2( 640, 480 )
+render_target_v_flip = true
+
+[node name="ColorMapFg" type="TileMap" parent="EmulatorFramework/EmulatorVideo/ColorMapFgViewport"]
+tile_set = ExtResource( 8 )
+cell_size = Vector2( 8, 16 )
+format = 1
+
 [node name="FramebufferNew" type="Viewport" parent="."]
 size = Vector2( 640, 480 )
 usage = 0
 render_target_v_flip = true
 render_target_clear_mode = 1
 
-[node name="EmulatorFramework" type="Node" parent="FramebufferNew"]
-script = ExtResource( 7 )
-
-[node name="EmulatorCore" type="Node" parent="FramebufferNew/EmulatorFramework"]
-script = ExtResource( 6 )
-
-[node name="EmulatorVideo" type="Node" parent="FramebufferNew/EmulatorFramework"]
-script = ExtResource( 2 )
-
-[node name="TileMap" type="TileMap" parent="FramebufferNew/EmulatorFramework/EmulatorVideo"]
-tile_set = ExtResource( 5 )
-cell_size = Vector2( 8, 16 )
-cell_custom_transform = Transform2D( 0, 0, 0, 0, 0, 0 )
-format = 1
-tile_data = PoolIntArray( 3407915, 0, 2, 3407916, 0, 2, 3407917, 0, 2, 3407918, 0, 2, 3407919, 0, 2, 3407920, 0, 2, 3407922, 0, 2, 3407923, 0, 2, 3473448, 0, 2, 3473449, 0, 2, 3473450, 0, 2, 3473451, 0, 2, 3473452, 0, 2, 3473453, 0, 2, 3473455, 0, 2, 3473456, 0, 2, 3473457, 0, 2, 3473458, 0, 2, 3473459, 0, 2, 3473460, 0, 2, 3473461, 0, 2, 3473462, 0, 2, 3538983, 0, 2, 3538984, 0, 2 )
+[node name="Compositor" type="ColorRect" parent="FramebufferNew"]
+material = SubResource( 17 )
+margin_right = 640.0
+margin_bottom = 480.0
 
 [node name="Rastermask" type="Viewport" parent="."]
 size = Vector2( 640, 480 )

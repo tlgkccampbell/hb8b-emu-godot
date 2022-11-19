@@ -15,7 +15,7 @@ namespace Hb8b.Emulation
         /// <param name="bus">The system bus to which the video circuit is attached.</param>
         /// <param name="offset">The video circuit's offset within the system's memory map.</param>
         public Hb8bVideoCircuit(Hb8bSystemBus bus, UInt16 offset)
-            : base(bus, offset, 0x2000)
+            : base(bus, offset, 0x4000)
         { }
 
         /// <summary>

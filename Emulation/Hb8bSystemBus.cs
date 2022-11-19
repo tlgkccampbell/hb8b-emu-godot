@@ -194,6 +194,7 @@ namespace Hb8b.Emulation
                     break;
 
                 case 2:
+                case 3:
                     OpenBusValue = Video.Memory[address - Video.Offset];
                     break;
 
@@ -267,6 +268,7 @@ namespace Hb8b.Emulation
                     break;
 
                 case 2:
+                case 3:
                     Array.Copy(Video.Memory, address - Video.Offset, buffer, 0, 256);
                     break;
 
@@ -317,6 +319,7 @@ namespace Hb8b.Emulation
                     break;
 
                 case 2:
+                case 3:
                     Video.Memory[address - Video.Offset] = value;
                     break;
 
