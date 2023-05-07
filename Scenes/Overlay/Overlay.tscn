@@ -442,11 +442,22 @@ margin_right = 1112.0
 margin_bottom = 408.0
 script = ExtResource( 5 )
 
-[node name="RomLoadButton" type="Button" parent="VBoxContainer/MemoryPanel/PanelContainer/MarginContainer/MemoryPageViewer"]
-margin_left = 1009.0
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/MemoryPanel/PanelContainer/MarginContainer/MemoryPageViewer"]
 margin_top = 468.0
 margin_right = 1234.0
 margin_bottom = 500.0
+
+[node name="MemoryPageLabel" type="Label" parent="VBoxContainer/MemoryPanel/PanelContainer/MarginContainer/MemoryPageViewer/HBoxContainer"]
+margin_top = 8.0
+margin_right = 1005.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+text = "Work RAM"
+
+[node name="RomLoadButton" type="Button" parent="VBoxContainer/MemoryPanel/PanelContainer/MarginContainer/MemoryPageViewer/HBoxContainer"]
+margin_left = 1009.0
+margin_right = 1234.0
+margin_bottom = 32.0
 rect_min_size = Vector2( 225, 32 )
 size_flags_horizontal = 8
 text = "Load ROM..."
@@ -521,7 +532,8 @@ size_flags_vertical = 8
 text = "Go"
 
 [connection signal="value_changed" from="VBoxContainer/MemoryPanel/PanelContainer/MarginContainer/MemoryPageViewer/MemoryPageSelector/CenterContainer/HBoxContainer/SpinBox" to="VBoxContainer/MemoryPanel/PanelContainer/MarginContainer/MemoryPageViewer/CenterContainer/MarginContainer/PanelContainer/MarginContainer/MemoryPageDisplay" method="_on_SpinBox_value_changed"]
-[connection signal="pressed" from="VBoxContainer/MemoryPanel/PanelContainer/MarginContainer/MemoryPageViewer/RomLoadButton" to="VBoxContainer/MemoryPanel/PanelContainer/MarginContainer/MemoryPageViewer" method="_on_RomLoadButton_pressed"]
+[connection signal="PageChanged" from="VBoxContainer/MemoryPanel/PanelContainer/MarginContainer/MemoryPageViewer/CenterContainer/MarginContainer/PanelContainer/MarginContainer/MemoryPageDisplay" to="VBoxContainer/MemoryPanel/PanelContainer/MarginContainer/MemoryPageViewer" method="_on_MemoryPageDisplay_PageChanged"]
+[connection signal="pressed" from="VBoxContainer/MemoryPanel/PanelContainer/MarginContainer/MemoryPageViewer/HBoxContainer/RomLoadButton" to="VBoxContainer/MemoryPanel/PanelContainer/MarginContainer/MemoryPageViewer" method="_on_RomLoadButton_pressed"]
 [connection signal="file_selected" from="VBoxContainer/MemoryPanel/PanelContainer/MarginContainer/MemoryPageViewer/RomFileDialog" to="VBoxContainer/MemoryPanel/PanelContainer/MarginContainer/MemoryPageViewer" method="_on_RomFileDialog_file_selected"]
 [connection signal="Confirmed" from="GotoDialog" to="." method="_on_GotoDialog_Confirmed"]
 [connection signal="about_to_show" from="GotoDialog" to="GotoDialog" method="_on_GotoDialog_about_to_show"]

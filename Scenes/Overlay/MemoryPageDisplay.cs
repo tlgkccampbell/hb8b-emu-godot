@@ -1,5 +1,5 @@
-using Godot;
 using System;
+using Godot;
 
 [Tool]
 public class MemoryPageDisplay : Control
@@ -17,6 +17,9 @@ public class MemoryPageDisplay : Control
 	private Int32 _hexPairWidth;
 	private Int32 _page = 0;
 
+	[Signal]
+	public delegate void PageChanged(Int32 page);
+
 	public override void _Ready()
 	{
 		_emulatedDevice = Engine.EditorHint ? null : GetNode<EmulatedDevice>("/root/EmulatedDevice");
@@ -27,7 +30,7 @@ public class MemoryPageDisplay : Control
 		_elementSpacing = (Int32)Math.Ceiling(_font.GetStringSize(" ").x);
         _lineSpacing = _elementSpacing / 2;
 		_hexAddrWidth = (Int32)Math.Ceiling(_font.GetStringSize("$FFFF").x);
-        _hexPairWidth = (Int32)Math.Ceiling(_font.GetStringSize("$FF").x);
+        _hexPairWidth = (Int32)Math.Ceiling(_font.GetStringSize("$FF").x);		
 	}
 
 	public override void _Draw()
@@ -101,7 +104,12 @@ public class MemoryPageDisplay : Control
 
 	private void _on_SpinBox_value_changed(float value)
 	{
+		var oldValue = _page;
 		_page = Math.Max(0, Math.Min(255, (Int32)value));
+		if (_page != oldValue)
+        {
+			EmitSignal(nameof(PageChanged), _page);
+		}
 		Update();
 	}
 }
