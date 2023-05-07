@@ -20,7 +20,7 @@ namespace Hb8b.Emulation
         public Hb8bSystemBus()
         {
             this.Cpu = new Hb8bCpu(this);
-            this.SystemRam = new Hb8bSystemMemory(this, 0x0000, 0x4000);
+            this.SystemRam = new Hb8bSystemMemory(this, 0x0000, 0x2000);
             this.SystemRom = new Hb8bSystemMemory(this, 0x8000, 0x8000, fill: 0xEA);
             this.SystemRom.Memory[0xFFFC - SystemRom.Offset] = 0x00;
             this.SystemRom.Memory[0xFFFD - SystemRom.Offset] = 0xE0;
@@ -28,7 +28,7 @@ namespace Hb8b.Emulation
             this.SystemRom.Memory[0xE001 - SystemRom.Offset] = 0x00;
             this.SystemRom.Memory[0xE002 - SystemRom.Offset] = 0xE0;
             this.Via0 = new Hb8bVia(this);
-            this.Video = new Hb8bVideoCircuit(this, 0x4000);
+            this.Video = new Hb8bVideoCircuit(this, 0x2000);
             this.Disassembler = new Disassembler(this);
             this.Reset();            
         }
@@ -57,9 +57,9 @@ namespace Hb8b.Emulation
             switch (index)
             {
                 case 0:
-                case 1:
                     return Hb8bMemoryBlock.WorkRam;
 
+                case 1:
                 case 2:
                     return Hb8bMemoryBlock.VideoRam;
 
